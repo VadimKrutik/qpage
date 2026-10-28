@@ -871,6 +871,7 @@
     $("#video-show").addEventListener("click", showVideo);
     $("#qr-share").addEventListener("click", shareSite);
     $("#hero-qr").addEventListener("click", showQr);
+    $("#header-qr").addEventListener("click", showQr);
     // Ссылки «Конфиденциальность» и «Доступность» в подвале сразу раскрывают полный текст.
     var MORE = { "#privacy": "#privacy-more", "#accessibility": "#accessibility-more" };
     function openMore(hash) { if (MORE[hash]) $(MORE[hash]).open = true; }

@@ -171,6 +171,35 @@ a:hover { color: var(--accent); }
   cursor: pointer;
 }
 .menu-toggle .icon { width: 24px; height: 24px; }
+/* QR-кнопка в шапке телефона - рядом с меню, в тех же тонких уголках, что код в заливке на компьютере. */
+.header-qr {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  margin-inline-end: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  color: var(--text);
+  cursor: pointer;
+  background:
+    linear-gradient(currentColor, currentColor) top left / 8px 1.5px,
+    linear-gradient(currentColor, currentColor) top left / 1.5px 8px,
+    linear-gradient(currentColor, currentColor) top right / 8px 1.5px,
+    linear-gradient(currentColor, currentColor) top right / 1.5px 8px,
+    linear-gradient(currentColor, currentColor) bottom left / 8px 1.5px,
+    linear-gradient(currentColor, currentColor) bottom left / 1.5px 8px,
+    linear-gradient(currentColor, currentColor) bottom right / 8px 1.5px,
+    linear-gradient(currentColor, currentColor) bottom right / 1.5px 8px;
+  background-repeat: no-repeat;
+}
+.header-qr .icon { width: 20px; height: 20px; }
+.header-qr[hidden] { display: none; }
+@media (min-width: 700px) { .header-qr { display: none; } }
 
 /* Меню на телефоне: раскрывается под шапкой */
 @media (max-width: 899px) {
@@ -392,6 +421,8 @@ a:hover { color: var(--accent); }
 /* Код крупно (по нажатию) - в том же окне, что фото лицензий. */
 .doc-view .qr-big { display: block; width: min(80vw, 70vh, 420px); padding: 16px; background: #fff; border-radius: 12px; }
 .doc-view .qr-big svg { display: block; width: 100%; height: auto; }
+/* У кода крестик - над плиткой, чтобы не закрывал угол кода (камера его не узнает). */
+.doc-view:has(.qr-big) .doc-close { top: -56px; inset-inline-end: 0; }
 
 /* Телефон: фото владельца слева, три строки - справа от него, по центру оставшегося места. */
 @media (max-width: 699px) {
@@ -402,11 +433,8 @@ a:hover { color: var(--accent); }
   .hero:not(.has-portrait) .hero-banner h1,
   .hero:not(.has-portrait) .hero-banner .hero-facts { grid-column: 1; }
   .hero-portrait { border-width: 3px; }
-  /* С QR-кодом - три колонки: фото | название | код (название остаётся по центру). */
-  .hero-banner > .container:has(> .hero-qr:not([hidden])) { grid-template-columns: var(--pw) minmax(0, 1fr) calc(var(--pw) + 8px); column-gap: 10px; }
-  .hero-banner > .container:has(> .hero-qr:not([hidden])) :is(h1, .hero-facts) { grid-column: 2; }
-  .hero-qr { --qw: calc(var(--pw) + 8px); padding: 7px; }
-  .hero-qr-tile { padding: 3px; border-radius: 6px; }
+  /* QR-код на телефоне - не в заливке (тесно названию), а кнопкой в шапке. */
+  .hero-qr { display: none; }
   /* Две кнопки под «Где работаем» - одинаковой ширины, во всю строку. */
   .hero-actions { width: 100%; }
   .hero-actions .btn { flex: 1 1 0; }
