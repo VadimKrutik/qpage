@@ -1,0 +1,15 @@
+{
+  "name": "qpage-generator",
+  "private": true,
+  "description": "Генератор сайтов QPage из Google Формы",
+  "scripts": {
+    "check": "node tests/check-site.js",
+    "test-script": "node tests/apps-script-mock.js tests/sample/answers.json tests/sample/translations.json tests/sample/sheet.json"
+  },
+  "devDependencies": {
+    "axe-core": "4.14.0",
+    "jsqr": "1.4.0",
+    "playwright": "1.63.0",
+    "pngjs": "7.0.0"
+  }
+}

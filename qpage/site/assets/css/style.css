@@ -1,0 +1,802 @@
+/* QPage — стили. Цвета меняются в content.js (site.theme) или здесь, в :root. */
+
+:root {
+  --accent: #0b6e69;
+  --accent-dark: #084f4b;
+  --accent-soft: #e3f2f1;
+  --text: #1c2326;
+  --muted: #4a5559;
+  --bg: #ffffff;
+  --bg-soft: #f5f7f7;
+  --border: #d4dbdc;
+  --error: #b42318;
+  --error-bg: #fdecea;
+  --ok: #146c2e;
+  --ok-bg: #e7f5ec;
+  --warn-bg: #fff6db;
+  --warn-border: #c79100;
+  --whatsapp: #0d7337;
+  --focus: #1a5fd0;
+  --radius: 12px;
+  --shadow: 0 2px 10px rgba(16, 32, 36, 0.08);
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Hebrew", Arial, sans-serif;
+  --header-h: 64px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-h) + 12px);
+  -webkit-text-size-adjust: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; }
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+  /* Очень длинные слова и ссылки из анкеты переносятся, а не растягивают страницу. */
+  overflow-wrap: anywhere;
+}
+body.has-mobile-bar { padding-bottom: 76px; }
+@media (min-width: 900px) { body.has-mobile-bar { padding-bottom: 0; } }
+
+img { max-width: 100%; height: auto; display: block; }
+h1, h2, h3 { line-height: 1.25; margin: 0 0 0.6em; }
+h2 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); }
+h3 { font-size: 1.15rem; }
+p { margin: 0 0 1em; }
+a { color: var(--accent-dark); text-underline-offset: 0.15em; }
+a:hover { color: var(--accent); }
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.icon { width: 1.25em; height: 1.25em; flex: none; vertical-align: -0.25em; }
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+.container { width: 100%; max-width: 1120px; margin-inline: auto; padding-inline: 16px; }
+@media (min-width: 600px) { .container { padding-inline: 24px; } }
+/* Все блоки (прайс, форма, видео, вопросы) — от левой до правой линии сетки.
+   Ограничена только длина строки обычного текста, чтобы его было удобно читать. */
+.narrow p:not(.demo-box) { max-width: 780px; }
+
+/* ---------- Ссылка «к содержанию» и плашка демо ---------- */
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: 12px;
+  top: -100px;
+  z-index: 100;
+  padding: 10px 16px;
+  background: var(--text);
+  color: #fff;
+  border-radius: 8px;
+}
+.skip-link:focus { top: 12px; color: #fff; }
+
+.demo-notice {
+  background: var(--warn-bg);
+  border-bottom: 2px solid var(--warn-border);
+  color: #5c4300;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+}
+.demo-notice p { margin: 0; padding: 8px 16px; }
+
+/* ---------- Шапка ---------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+/* Шапка в три колонки: название | языки | меню. Языки всегда ровно посередине —
+   при переключении на иврит они не перепрыгивают из угла в угол. */
+.header-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: var(--header-h);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.1rem;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  max-width: 100%;
+  min-width: 0;
+}
+.brand-logo { width: 40px; height: 40px; object-fit: contain; }
+/* Логотип-надпись (широкий): по высоте, без квадрата; название рядом не повторяем */
+.brand-logo.is-wide { width: auto; height: 32px; max-width: 110px; }
+.logo-wide .brand-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (min-width: 700px) { .brand-logo.is-wide { height: 36px; max-width: 200px; } }
+.brand-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* На очень узких экранах название остаётся только для экранных дикторов: оно есть на первом экране */
+@media (max-width: 699px) {
+  .brand-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
+.site-nav ul { list-style: none; margin: 0; padding: 0; }
+.site-nav a {
+  display: block;
+  padding: 10px 12px;
+  color: var(--text);
+  text-decoration: none;
+  border-radius: 8px;
+}
+.site-nav a:hover { background: var(--accent-soft); color: var(--accent-dark); }
+
+.menu-toggle {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px; height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+.menu-toggle .icon { width: 24px; height: 24px; }
+
+/* Меню на телефоне: раскрывается под шапкой */
+@media (max-width: 899px) {
+  .site-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    inset-inline: 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 8px 16px 16px;
+  }
+  .menu-open .site-nav { display: block; }
+  .site-nav a { padding: 12px; font-size: 1.1rem; }
+}
+@media (min-width: 900px) {
+  .menu-toggle { display: none; }
+  /* На компьютере меню — второй строкой шапки (в одну строку с языками оно не помещается). */
+  html { scroll-padding-top: 120px; }
+  .header-inner { grid-template-columns: auto 1fr; padding-block: 8px 4px; row-gap: 4px; }
+  /* Название с логотипом — по центру по высоте обоих рядов (языки и меню). */
+  .brand { grid-row: 1 / 3; align-self: center; }
+  /* Языки и меню прижаты к правой линии сетки — той же, где кончаются кнопки, фото и блоки. */
+  .site-nav { grid-column: 2; grid-row: 2; justify-self: end; }
+  .site-nav ul { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+  .site-nav a { padding: 6px 12px; }
+  .header-inner .lang-switch { justify-self: end; }
+  /* Длинное название в шапке обрезается многоточием: полностью оно стоит в цветном блоке. */
+  .brand-name { max-width: 380px; }
+}
+
+.lang-switch {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  /* Порядок RU · HE · EN одинаковый на всех языках, и на иврите тоже */
+  direction: ltr;
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  flex: none;
+}
+.lang-switch button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lang-switch button:not([hidden]) ~ button { border-inline-start: 1px solid var(--border); }
+.lang-switch button:hover { background: var(--accent-soft); }
+.lang-switch button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.lang-switch button:focus-visible { outline-offset: -3px; }
+
+/* ---------- Кнопки ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 20px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  /* Слова на кнопках переносим только целиком (иначе «Позвонит-ь» на узком телефоне). */
+  overflow-wrap: normal;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-dark); color: #fff; }
+.btn-secondary { background: var(--bg); color: var(--accent-dark); border-color: var(--accent); }
+.btn-secondary:hover { background: var(--accent-soft); color: var(--accent-dark); }
+.btn-whatsapp { background: var(--whatsapp); color: #fff; }
+.btn-whatsapp:hover { background: #095a2b; color: #fff; }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+
+/* ---------- Первый экран ---------- */
+
+/* Одинаковый во всех версиях. Сверху — цветная заливка: фото владельца слева, по центру три строки
+   (вид деятельности, название, преимущества). Ниже — «Где работаем» слева и кнопки справа, под ними главное
+   предложение, ещё ниже — главное фото крупно. */
+.hero { padding: 0 0 36px; background: var(--bg); }
+@media (min-width: 700px) { .hero { padding-bottom: 56px; } }
+.hero-banner {
+  display: flex;
+  align-items: center;
+  min-height: clamp(200px, 36vh, 400px);
+  padding: 40px 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+}
+/* Три колонки: фото — у левого края, текст — ровно по центру блока (третья колонка уравновешивает первую).
+   Крайние колонки — по размеру фото: длинное название не сжимает фото в овал. */
+.hero-banner > .container {
+  --pw: 120px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: var(--pw) minmax(0, 1fr) var(--pw);
+  align-items: center;
+  column-gap: 24px;
+  text-align: center;
+}
+.hero-banner h1,
+.hero-banner .hero-facts { grid-column: 2; }
+.hero-portrait {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  justify-self: start;
+  width: var(--pw);
+  height: var(--pw);
+  max-width: none;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid rgba(255, 255, 255, 0.85);
+}
+.hero-kind {
+  display: block;
+  margin: 0 0 4px;
+  line-height: 1.5;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+.hero h1 { font-size: clamp(2rem, 1.5rem + 2.5vw, 3.25rem); margin: 0 0 0.3em; color: #fff; text-wrap: balance; }
+/* Длинное название (больше 30 знаков) — мельче, чтобы не занимало три строки. */
+.hero.long-name h1 { font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.4rem); }
+.hero-facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+}
+.hero-facts li { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+/* Копия преимуществ под заливкой — только на телефоне (в заливке там лишь фото и название). */
+.hero-facts-below { display: none; }
+.hero-facts .icon { color: #fff; }
+/* «Где работаем» — у начала строки, кнопки — у конца; на узком экране кнопки переносятся вниз. */
+.hero-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; padding-top: 24px; }
+.hero-more .hero-areas { margin: 0; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.hero-tagline { margin: 24px 0 0; font-size: 1.15rem; color: var(--text); }
+/* Главное фото — крупно, во всю ширину страницы (края совпадают с остальными блоками), не выше экрана.
+   Рамка постоянной формы (без сдвига при загрузке); фото внутри целиком, не обрезается.
+   Если фото другой формы (например вертикальное с телефона), по бокам — та же картинка, размытая. */
+.hero-photo-box {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  max-height: 85vh;
+  margin: 32px 0 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+}
+.hero-photo-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(28px) saturate(1.15);
+  transform: scale(1.2);
+  opacity: 0.9;
+}
+.hero-photo {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* Телефон: фото владельца слева, три строки — справа от него, по центру оставшегося места. */
+@media (max-width: 699px) {
+  .hero-banner > .container { --pw: 80px; grid-template-columns: var(--pw) minmax(0, 1fr); column-gap: 16px; }
+  .has-portrait .hero-banner h1,
+  .has-portrait .hero-banner .hero-facts { grid-column: 2; }
+  .hero:not(.has-portrait) .hero-banner > .container { grid-template-columns: 1fr; }
+  .hero:not(.has-portrait) .hero-banner h1,
+  .hero:not(.has-portrait) .hero-banner .hero-facts { grid-column: 1; }
+  .hero-portrait { border-width: 3px; }
+  /* Две кнопки под «Где работаем» — одинаковой ширины, во всю строку. */
+  .hero-actions { width: 100%; }
+  .hero-actions .btn { flex: 1 1 0; }
+  .hero h1 { font-size: 1.9rem; }
+  .hero.long-name h1 { font-size: 1.45rem; }
+  .hero-banner { min-height: 0; padding: 24px 0; }
+  .hero-banner .hero-facts { display: none; }
+  .hero-banner > .container { row-gap: 0; }
+  .hero-facts-below { display: flex; justify-content: flex-start; gap: 6px 16px; padding-top: 16px; color: var(--text); font-size: 0.95rem; }
+  .hero-facts-below .icon { color: var(--accent); }
+  .hero-more { padding-top: 16px; }
+  .hero-tagline { margin-top: 16px; }
+  .hero-photo-box { margin-top: 24px; aspect-ratio: 4 / 3; }
+}
+@media (min-width: 700px) {
+  .hero-banner { padding: 56px 0; }
+  .hero-banner > .container { --pw: 160px; }
+}
+
+/* ---------- Секции ---------- */
+
+.section { padding: 36px 0; }
+.section-soft { background: var(--bg-soft); }
+/* Последний элемент блока без нижнего поля: промежутки между всеми блоками одинаковые (только отступ секции). */
+.section > .container > :not(:has(~ :not([hidden]))),
+.section > .container > :not(:has(~ :not([hidden]))) > :not(:has(~ :not([hidden]))),
+.steps li:last-child { margin-bottom: 0; }
+@media (min-width: 700px) { .section { padding: 56px 0; } }
+.prose p:last-child { margin-bottom: 0; }
+
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  /* auto-fit: 2–3 карточки растягиваются на всю ширину, а не жмутся к одному краю. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+.card {
+  /* Без боковых отступов: текст карточки начинается на общей линии всех блоков. */
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0 0;
+  border-top: 3px solid var(--accent);
+}
+.card p { color: var(--muted); }
+.card .card-price { margin: auto 0 0; color: var(--text); font-weight: 700; }
+
+.gallery {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+}
+.gallery figure { margin: 0; position: relative; }
+.gallery img {
+  /* Все рамки одного размера (ровная сетка), фото внутри — целиком, без обрезки;
+     свободные края рамки залиты спокойным фоном. */
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+}
+.gallery figcaption {
+  /* Название — поверх нижнего края фото на затемнении. Плитки одной высоты, мозаика не разъезжается. */
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 32px 12px 10px;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.62));
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+/* Цена — белым ярлычком в верхнем углу фото, на всех плитках одинаково. */
+.gallery .photo-price {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- Лицензии, прайс, шаги, отзывы, видео ---------- */
+
+.check-list { list-style: none; margin: 0 0 20px; padding: 0; }
+.check-list li { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.check-list .icon { color: var(--accent); flex: none; margin-top: 0.25em; }
+
+/* Фото документов (лицензии, дипломы): ровные маленькие рамки, документ целиком. */
+.doc-photos { list-style: none; margin: 0 0 20px; padding: 0; display: flex; flex-wrap: wrap; gap: 12px; }
+.doc-photos img {
+  width: 140px;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-soft);
+}
+.doc-photos a:hover img { border-color: var(--accent); }
+
+.price-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+.price-table th, .price-table td { padding: 12px 0; border-bottom: 1px solid var(--border); text-align: start; vertical-align: top; }
+.price-table th[scope="row"] { font-weight: 500; }
+.price-table td { text-align: end; font-weight: 700; white-space: nowrap; padding-inline-start: 16px; }
+.price-table .price-group th { padding-top: 24px; color: var(--accent-dark); font-weight: 700; border-bottom: 2px solid var(--accent); }
+#pricelist .btn { margin-top: 8px; }
+
+/* Маркеры: малиновые галочки («Коротко о нас») и кружки без значка (цены) */
+.dot { flex: none; width: 6px; height: 6px; margin-top: 0.62em; border-radius: 50%; background: var(--accent); }
+.dot-item { display: flex; gap: 12px; align-items: flex-start; }
+.card .dot, .price-table .dot { display: none; }
+/* На телефоне одиночные кнопки блоков — во всю ширину, от линии до линии. */
+@media (max-width: 599px) {
+  main .section .btn:not(.video-box .btn, .map-box .btn) { width: 100%; }
+}
+.dot-item > .icon { color: var(--accent); width: 1.45em; height: 1.45em; margin-top: 0.05em; }
+
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.steps li {
+  position: relative;
+  counter-increment: step;
+  min-height: 40px;
+  padding-inline-start: 56px;
+  margin-bottom: 20px;
+  padding-top: 6px;
+}
+.steps li::before {
+  content: counter(step);
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Отзывы — свёрнутым списком: имя и начало текста в одну строку, весь отзыв — по нажатию. */
+.reviews .review summary { justify-content: flex-start; font-weight: 400; min-width: 0; }
+.review-name { flex: none; font-weight: 700; }
+.review-preview { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); }
+.reviews .review summary::after { margin-inline-start: auto; }
+.reviews .review[open] .review-preview { display: none; }
+.review blockquote { margin: 0; }
+.review blockquote p { margin: 0; }
+
+.video-box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-soft);
+  min-height: 200px;
+}
+/* До нажатия — тёмный кадр 16:9 с кнопкой, как у плеера: видно, что здесь видео. */
+.video-box:not(:has(iframe)) { background: #1c2124; border-color: #1c2124; }
+.video-box .map-placeholder { min-height: 220px; padding-block: 40px; background: none; color: #e8ecee; }
+.video-box iframe { width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; display: block; }
+
+.accordion details { border-bottom: 1px solid var(--border); }
+.accordion details:first-child { border-top: 1px solid var(--border); }
+.accordion summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  padding: 16px 0;
+  font-weight: 600;
+  list-style: none;
+}
+.accordion summary::-webkit-details-marker { display: none; }
+/* Знак «+» в конце строки, у открытого вопроса — «−». */
+.accordion summary::after { content: "+"; flex: none; font-size: 1.4rem; line-height: 1; color: var(--accent); }
+.accordion details[open] summary::after { content: "\2212"; }
+.accordion summary:hover { color: var(--accent-dark); }
+.details-body { padding: 0 0 8px; }
+
+/* ---------- Контакты ---------- */
+
+.contacts-grid { display: grid; gap: 32px; }
+@media (min-width: 800px) { .contacts-grid { grid-template-columns: 1fr 1fr; } }
+.contact-list { margin: 0; }
+.contact-list > div { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.contact-list dt { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.95rem; }
+.contact-list dt .icon { color: var(--accent); }
+.contact-list dd { margin: 4px 0 0; font-size: 1.15rem; font-weight: 600; }
+.contact-actions { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
+
+/* ---------- Карта ---------- */
+
+.address { display: flex; align-items: flex-start; gap: 8px; font-size: 1.15rem; font-weight: 600; }
+.address .icon { color: var(--accent); margin-top: 0.2em; }
+.map-links { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.map-box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg);
+  width: 100%;
+  height: 320px;
+}
+@media (min-width: 700px) { .map-box { height: 420px; } }
+.map-box iframe { width: 100%; height: 100%; border: 0; display: block; }
+.map-placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  background:
+    repeating-linear-gradient(45deg, transparent 0 22px, rgba(11, 110, 105, 0.05) 22px 44px),
+    var(--bg);
+}
+
+/* ---------- Форма ---------- */
+
+.badge {
+  display: inline-block;
+  vertical-align: middle;
+  margin-inline-start: 8px;
+  padding: 2px 10px;
+  border: 1px solid var(--warn-border);
+  border-radius: 999px;
+  background: var(--warn-bg);
+  color: #5c4300;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.demo-box {
+  padding: 12px 16px;
+  border-inline-start: 4px solid var(--warn-border);
+  border-radius: 8px;
+  background: var(--warn-bg);
+}
+
+.field { margin-bottom: 18px; }
+/* На широком экране форма во всю ширину: имя, телефон и почта в один ряд, остальное ниже. */
+@media (min-width: 800px) {
+  #contact-form { display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 24px; align-items: start; }
+  #contact-form > * { grid-column: 1 / -1; }
+  #contact-form > .field:has(#f-name, #f-phone, #f-email) { grid-column: auto; }
+  #contact-form > button { justify-self: start; }
+}
+.field label { display: block; margin-bottom: 6px; font-weight: 600; }
+.req { color: var(--error); }
+.field input[type="text"],
+.field input[type="tel"],
+.field input[type="email"],
+.field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #8a9699;
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+/* Телефон и почта вводятся слева направо, но выравниваются по направлению страницы */
+[dir="rtl"] .field input[type="tel"],
+[dir="rtl"] .field input[type="email"] { text-align: right; }
+.field textarea { resize: vertical; min-height: 120px; }
+.field input:focus-visible, .field textarea:focus-visible { border-color: var(--focus); outline-offset: 0; }
+.field [aria-invalid="true"] { border-color: var(--error); background: var(--error-bg); }
+.field-hint { margin: 4px 0 0; color: var(--muted); font-size: 0.92rem; }
+.field-error { margin: 4px 0 0; color: var(--error); font-weight: 600; font-size: 0.95rem; }
+.field-error:empty { display: none; }
+
+.field-check { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: start; }
+.field-check input { width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--accent); }
+.field-check label { font-weight: 400; margin: 0; }
+.field-check .field-error { grid-column: 1 / -1; }
+
+.error-summary {
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  border: 2px solid var(--error);
+  border-radius: 10px;
+  background: var(--error-bg);
+}
+.error-summary p { margin: 0 0 6px; font-weight: 700; }
+.error-summary ul { margin: 0; padding-inline-start: 20px; }
+.error-summary a { color: var(--error); }
+
+.hp { position: absolute; inset-inline-start: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.form-result:empty, #qr-share-status:empty { display: none; }
+.form-wa { margin-top: 14px; }
+.form-wa p { margin: 0 0 8px; }
+.form-result { margin-top: 20px; padding: 14px 18px; border-radius: 10px; font-weight: 600; }
+.form-result.is-demo { background: var(--warn-bg); border: 2px solid var(--warn-border); }
+.form-result.is-ok { background: var(--ok-bg); border: 2px solid var(--ok); color: var(--ok); }
+.form-result.is-error { background: var(--error-bg); border: 2px solid var(--error); color: var(--error); }
+
+/* ---------- QR ---------- */
+
+.qr-inner { display: grid; gap: 24px; align-items: center; }
+@media (min-width: 700px) { .qr-inner { grid-template-columns: auto 1fr; gap: 40px; } }
+.qr-code {
+  width: 200px;
+  height: 200px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.qr-code svg { width: 100%; height: 100%; display: block; }
+.qr-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.qr-actions .btn { margin: 0; }
+.hero-areas { margin: 0; font-size: 1.05rem; color: var(--accent-dark); }
+/* Без значка и плашки: слова «Где работаем?» начинаются на общей линии всех блоков. */
+.text-link { font-weight: 600; }
+.qr-url { font-size: 0.95rem; color: var(--muted); word-break: break-all; }
+
+/* ---------- Конфиденциальность и подвал ---------- */
+
+.privacy-more { margin-top: 16px; }
+.privacy-more > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 18px;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent-dark);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.privacy-more > summary::-webkit-details-marker { display: none; }
+.privacy-more > summary::after { content: "▾"; margin-inline-start: 8px; }
+.privacy-more[open] > summary::after { content: "▴"; }
+.privacy-more > summary:hover { background: var(--accent-soft); }
+.privacy-list { padding-inline-start: 22px; margin-top: 16px; }
+.privacy-list li { margin-bottom: 10px; }
+
+.site-footer { background: #142024; color: #dfe7e8; padding: 32px 0; font-size: 0.95rem; }
+.site-footer a { color: #fff; }
+.footer-inner { display: flex; flex-wrap: wrap; gap: 8px 32px; }
+.footer-inner p { margin: 0; }
+/* Подпись QPage — отдельной строкой под чертой, в начале строки */
+.footer-made { margin-top: 20px; }
+/* Линия — ровно по краям текста (не заходит на внутренние отступы). */
+.footer-made p { padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.18); }
+.footer-made p { margin: 0; }
+.made-with a { display: inline-flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; text-decoration: none; color: inherit; }
+/* Логотип QPortall: слово с засечками, «Q» малиновая #FB01F2 (RGB 251-1-242), на тёмном подвале «Portall» белым. */
+.qpage-mark { font-family: Georgia, "Times New Roman", serif; font-size: 1.3em; line-height: 1; color: #fff; margin-inline: 2px; }
+.qpage-q { color: #fb01f2; }
+/* «Заказать сайт» — небольшая кнопка рядом с логотипом */
+.made-with a[href] .made-with-order { display: inline-block; color: #fff; border: 1px solid #fff; border-radius: 8px; padding: 6px 12px; line-height: 1.2; font-weight: 600; }
+.made-with a[href]:hover .made-with-order { background: #fff; color: #142024; }
+
+.noscript { padding: 12px 16px; background: var(--warn-bg); }
+
+/* ---------- Панель действий на телефоне ---------- */
+
+.mobile-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 10px rgba(16, 32, 36, 0.08);
+}
+.mobile-bar .btn { min-width: 0; padding-inline: 8px; gap: 6px; }
+@media (min-width: 900px) { .mobile-bar { display: none; } }
+
+@media print {
+  .site-header, .mobile-bar, .skip-link, .map-box, .video-box, #form { display: none; }
+}
+
+/* Пока скрипт переводит страницу на язык посетителя (скрипт выбора языка в <head> index.html) — не показываем её, чтобы не «прыгала». */
+.lang-wait body { visibility: hidden; }
+
+/* =====================================================================
+   Версии внешнего вида: html[data-design]. Всё одинаковое, кроме одного блока
+   сразу после первого экрана (порядок блоков — core.js, DESIGNS).
+   ===================================================================== */
+
+/* «Витрина»: мозаика фото (фото с первого экрана в ней не повторяются):
+   два в ряд, два в ряд, одно во всю ширину, два в ряд, одно во всю ширину (и так далее). */
+/* Фото без рамок, вплотную друг к другу, заполняют свою клетку. */
+[data-design="showcase"] .gallery { grid-template-columns: 1fr 1fr; gap: 6px; }
+[data-design="showcase"] .gallery img { border: 0; border-radius: 0; background: none; object-fit: cover; }
+[data-design="showcase"] .gallery figcaption { border-radius: 0; }
+/* На узкой плитке телефона цена — над названием, чтобы название не сжималось в три строки. */
+[data-design="showcase"] .gallery > li:nth-child(8n+5),
+[data-design="showcase"] .gallery > li:nth-child(8n+8) { grid-column: 1 / -1; }
+[data-design="showcase"] .gallery > li:nth-child(8n+5) img,
+[data-design="showcase"] .gallery > li:nth-child(8n+8) img { aspect-ratio: 16 / 9; }
+/* Последнее фото, оставшееся в ряду одно, — во всю ширину, без дыры рядом. */
+[data-design="showcase"] .gallery > li:last-child:is(:nth-child(8n+1), :nth-child(8n+3), :nth-child(8n+6)) { grid-column: 1 / -1; }
+[data-design="showcase"] .gallery > li:last-child:is(:nth-child(8n+1), :nth-child(8n+3), :nth-child(8n+6)) img { aspect-ratio: 16 / 9; }
+@media (min-width: 700px) { [data-design="showcase"] .gallery { gap: 10px; } }
+
+/* «Строгий»: «Ваш главный текст» — большой текст сразу после первого экрана. */
+/* «Ваш главный текст» — шириной с большое фото (просьба Vadim). */
+#story .narrow p { max-width: none; }
+.story-text p { font-size: clamp(1.1rem, 1rem + 0.4vw, 1.25rem); line-height: 1.8; margin: 0 0 1em; }
+.story-text p:last-child { margin-bottom: 0; }

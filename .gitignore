@@ -1,0 +1,8 @@
+node_modules/
+# сайты и фото клиентов не храним здесь
+QPage-sites/
+qpage-sites/
+qpage/preview/
+qpage-generator/shots/
+*.log
+.env
