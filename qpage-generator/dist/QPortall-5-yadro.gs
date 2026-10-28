@@ -645,7 +645,8 @@ var QPageCore = (function () {
       const x = t.gallery.items[i];
       if (!x || i < skip) return "";
       const hasPrice = typeof g.price === "number";
-      return '<li><figure><img src="' + e(g.src) + '" alt="' + e(x.alt) + '" loading="lazy" width="640" height="420">' +
+      return '<li><figure><img class="ph-bg" src="' + e(g.src) + '" alt="" aria-hidden="true" loading="lazy">' +
+        '<img class="ph" src="' + e(g.src) + '" alt="' + e(x.alt) + '" loading="lazy" width="640" height="420">' +
         (x.caption ? "<figcaption><span>" + e(x.caption) + "</span></figcaption>" : "") +
         (hasPrice ? '<strong class="photo-price">' + e(money(g.price, lang)) + "</strong>" : "") + "</figure></li>";
     }).join(""));

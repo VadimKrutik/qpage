@@ -191,14 +191,14 @@ a:hover { color: var(--accent); }
   .menu-toggle { display: none; }
   /* На компьютере меню - второй строкой шапки (в одну строку с языками оно не помещается). */
   html { scroll-padding-top: 120px; }
-  .header-inner { grid-template-columns: auto 1fr; padding-block: 8px 4px; row-gap: 4px; }
+  .header-inner { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); padding-block: 8px 4px; row-gap: 4px; }
   /* Название с логотипом - по центру по высоте обоих рядов (языки и меню). */
   .brand { grid-row: 1 / 3; align-self: center; }
-  /* Языки и меню прижаты к правой линии сетки - той же, где кончаются кнопки, фото и блоки. */
-  .site-nav { grid-column: 2; grid-row: 2; justify-self: end; }
+  /* Языки - ровно по центру шапки (как на телефоне); меню вторым рядом прижато к правой линии сетки -
+     той же, где кончаются кнопки, фото и блоки. */
+  .site-nav { grid-column: 2 / 4; grid-row: 2; justify-self: end; }
   .site-nav ul { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
   .site-nav a { padding: 6px 12px; }
-  .header-inner .lang-switch { justify-self: end; }
   /* Длинное название в шапке обрезается многоточием: полностью оно стоит в цветном блоке. */
   .brand-name { max-width: 380px; }
 }
@@ -425,18 +425,32 @@ a:hover { color: var(--accent); }
   gap: 16px;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
 }
-.gallery figure { margin: 0; position: relative; }
-.gallery img {
-  /* Все рамки одного размера (ровная сетка), фото внутри - целиком, без обрезки;
-     свободные края рамки залиты спокойным фоном. */
+/* Все рамки одного размера (ровная сетка), фото внутри - целиком, без обрезки;
+   свободные края рамки - та же картинка, размытая (как у главного фото). */
+.gallery figure {
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+}
+.gallery .ph-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(24px) saturate(1.15);
+  transform: scale(1.2);
+  opacity: 0.9;
+}
+.gallery .ph {
+  position: relative;
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 4 / 3;
   object-fit: contain;
-  border-radius: var(--radius);
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
 }
 .gallery figcaption {
   /* Название - поверх нижнего края фото на затемнении. Плитки одной высоты, мозаика не разъезжается. */
@@ -783,16 +797,16 @@ a:hover { color: var(--accent); }
    два в ряд, два в ряд, одно во всю ширину, два в ряд, одно во всю ширину (и так далее). */
 /* Фото без рамок, вплотную друг к другу, заполняют свою клетку. */
 [data-design="showcase"] .gallery { grid-template-columns: 1fr 1fr; gap: 6px; }
-[data-design="showcase"] .gallery img { border: 0; border-radius: 0; background: none; object-fit: cover; }
+[data-design="showcase"] .gallery figure { border-radius: 0; }
 [data-design="showcase"] .gallery figcaption { border-radius: 0; }
 /* На узкой плитке телефона цена - над названием, чтобы название не сжималось в три строки. */
 [data-design="showcase"] .gallery > li:nth-child(8n+5),
 [data-design="showcase"] .gallery > li:nth-child(8n+8) { grid-column: 1 / -1; }
-[data-design="showcase"] .gallery > li:nth-child(8n+5) img,
-[data-design="showcase"] .gallery > li:nth-child(8n+8) img { aspect-ratio: 16 / 9; }
+[data-design="showcase"] .gallery > li:nth-child(8n+5) .ph,
+[data-design="showcase"] .gallery > li:nth-child(8n+8) .ph { aspect-ratio: 16 / 9; }
 /* Последнее фото, оставшееся в ряду одно, - во всю ширину, без дыры рядом. */
 [data-design="showcase"] .gallery > li:last-child:is(:nth-child(8n+1), :nth-child(8n+3), :nth-child(8n+6)) { grid-column: 1 / -1; }
-[data-design="showcase"] .gallery > li:last-child:is(:nth-child(8n+1), :nth-child(8n+3), :nth-child(8n+6)) img { aspect-ratio: 16 / 9; }
+[data-design="showcase"] .gallery > li:last-child:is(:nth-child(8n+1), :nth-child(8n+3), :nth-child(8n+6)) .ph { aspect-ratio: 16 / 9; }
 @media (min-width: 700px) { [data-design="showcase"] .gallery { gap: 10px; } }
 
 /* «Строгий»: «Ваш главный текст» - большой текст сразу после первого экрана. */

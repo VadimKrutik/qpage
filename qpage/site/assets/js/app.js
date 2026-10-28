@@ -216,7 +216,8 @@
       var hasPrice = typeof g.price === "number";
       list.appendChild(el("li", {}, [
         el("figure", {}, [
-          el("img", { src: g.src, alt: tx.alt, loading: "lazy", width: "640", height: "420" }),
+          el("img", { "class": "ph-bg", src: g.src, alt: "", "aria-hidden": "true", loading: "lazy" }),
+          el("img", { "class": "ph", src: g.src, alt: tx.alt, loading: "lazy", width: "640", height: "420" }),
           tx.caption ? el("figcaption", {}, [el("span", { text: tx.caption })]) : null,
           hasPrice ? el("strong", { "class": "photo-price", text: formatPrice(g.price) }) : null
         ])
