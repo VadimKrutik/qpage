@@ -1,13 +1,13 @@
 // ===================== Анкета QPortall, код (собрано build-gs.js 2026-10-28) =====================
 /*
- * Своя анкета QPortall — вторая точка входа рядом с Google Формой (форма остаётся запасной).
+ * Своя анкета QPortall - вторая точка входа рядом с Google Формой (форма остаётся запасной).
  *
  *  - Страница анкеты лежит на Netlify (сайт qportall-anketa). Её выкладывает «QPortall → Опубликовать анкету QPortall»:
- *    вопросы берутся из questions() (Code.gs), фоны — с листа «Фоны анкеты» (дизайн N = строка N, ссылка …/?d=N).
+ *    вопросы берутся из questions() (Code.gs), фоны - с листа «Фоны анкеты» (дизайн N = строка N, ссылка …/?d=N).
  *  - Страница отправляет ответы в веб-приложение этого скрипта (doPost). doPost только проверяет и складывает:
  *    файлы — в папку «Анкеты — входящие» на Диске, ответы — строкой на лист «Анкеты QPortall», и ставит разовый
  *    триггер processAnketas. Сайт собирает processAnketas: триггер всегда работает на последней сохранённой версии
- *    кода, а веб-приложение — на версии своего развертывания.
+ *    кода, а веб-приложение - на версии своего развертывания.
  *  - Новая анкета → обычный лист клиента и сайт (buildSiteSheet + makeSite, как из Google Формы).
  *    Исправление по личной ссылке (?edit=<ключ>) → тот же лист и тот же сайт; строки, ответ на которые не менялся,
  *    остаются как есть (с правками владельца).
@@ -27,11 +27,11 @@ var ANKETA_SETTINGS = [
 ];
 var BG_SHEET = "Фоны анкеты";
 // Дизайн анкеты N = строка N этого листа (ссылка …/?d=N). Номер скрипт пишет сам.
-var BG_SHEET_HEADER = ["№", "картинка: ссылка на файл в Google Диске (или «встроенный фон 1–5»)", "что на картинке", "кому подходит", "цвет кнопок (можно пусто), например #0b6e69", "ссылка на анкету"];
+var BG_SHEET_HEADER = ["№", "картинка: ссылка на файл в Google Диске (или «встроенный фон 1-5»)", "что на картинке", "кому подходит", "цвет кнопок (можно пусто), например #0b6e69", "ссылка на анкету"];
 var BG = { num: 1, pic: 2, about: 3, who: 4, color: 5, link: 6 };
 var ANKETA_SITE = "qportall-anketa";
 // Первые фоны (лист «Фоны анкеты» создаётся с ними): картинка | что на картинке | кому подходит | цвет кнопок.
-// «встроенный фон N» — картинка из самой анкеты (папка anketa/bg); свои фоны — ссылкой на картинку в Google Диске.
+// «встроенный фон N» - картинка из самой анкеты (папка anketa/bg); свои фоны - ссылкой на картинку в Google Диске.
 var BG_DEFAULTS = [
   ["встроенный фон 1", "Тёплый светлый фон, мягкие волны", "Всем, универсальный", ""],
   ["встроенный фон 2", "Тёмно-синий, тонкие линии, золотистая рамка", "Строгое: юристы, нотариусы, бухгалтеры, финансы", "#1f2a44"],
@@ -42,7 +42,7 @@ var BG_DEFAULTS = [
 // Колонки листа «Сайты» после колонок makeSite (Code.gs, SITES_HEADER).
 var SITES_EXTRA = ["анкета: исправить", "правок использовано", "лимит правок", "канал", "оплачено"];
 // Каналы рекламы: канал N = строка N листа «Каналы» (ссылка …/?r=N). Номер канала запоминается с анкетой навсегда
-// (исправления его не меняют) и попадает на «Сайты» в колонку «канал». Счётчики на листе «Каналы» — формулы.
+// (исправления его не меняют) и попадает на «Сайты» в колонку «канал». Счётчики на листе «Каналы» - формулы.
 var CH_SHEET = "Каналы";
 var CH_HEADER = ["№", "канал (где реклама)", "номер фона с листа «Фоны анкеты» (можно пусто)", "ссылка на анкету", "анкет пришло", "сайтов оплачено"];
 var CH = { num: 1, name: 2, bg: 3, link: 4, count: 5, paid: 6 };
@@ -75,14 +75,14 @@ var ANKETA_UPLOAD_TITLE = { logo: UPLOAD_LOGO, main: UPLOAD_MAIN, portrait: UPLO
 // Раздел «QPortall → Инструкция» про анкету (добавляется в конец окна, см. showHelp в Code.gs).
 var ANKETA_HELP = [
   "<h3>Своя анкета QPortall</h3><ol>",
-  "<li>Ссылка для клиентов — <b>QPortall → Ссылки</b>. Google Форма остаётся запасной и работает как раньше.</li>",
-  "<li>Анкета с другим фоном: лист <b>«Фоны анкеты»</b>, дизайн N = строка N (ссылка …/?d=N). Свой фон — ссылка на картинку в Google Диске; ",
-  "после изменения листа — <b>QPortall → Опубликовать анкету QPortall</b>.</li>",
-  "<li>Ответы — лист <b>«Анкеты QPortall»</b> (статус сборки). «ошибка» — <b>QPortall → Анкеты QPortall: собрать ещё раз</b>.</li>",
+  "<li>Ссылка для клиентов - <b>QPortall → Ссылки</b>. Google Форма остаётся запасной и работает как раньше.</li>",
+  "<li>Анкета с другим фоном: лист <b>«Фоны анкеты»</b>, дизайн N = строка N (ссылка …/?d=N). Свой фон - ссылка на картинку в Google Диске; ",
+  "после изменения листа - <b>QPortall → Опубликовать анкету QPortall</b>.</li>",
+  "<li>Ответы - лист <b>«Анкеты QPortall»</b> (статус сборки). «ошибка» - <b>QPortall → Анкеты QPortall: собрать ещё раз</b>.</li>",
   "<li>Правки клиента: на «Сайты» ссылка <b>Исправить анкету</b> (её можно переслать клиенту), сколько правок использовано, ",
-  "<b>лимит правок</b> (впишите своё число). Число по умолчанию, лимит новых анкет в день и выключатель — лист <b>«Настройки анкеты»</b>.</li>",
-  "<li>Каналы рекламы: лист <b>«Каналы»</b>, канал N = строка N (ссылка …/?r=N, фон — номер с листа «Фоны анкеты»). ",
-  "Новую строку — <b>Опубликовать анкету QPortall</b> (появятся номер, ссылка и счётчики). Оплату отмечайте на «Сайты» в колонке <b>«оплачено»</b>: Да.</li>",
+  "<b>лимит правок</b> (впишите своё число). Число по умолчанию, лимит новых анкет в день и выключатель - лист <b>«Настройки анкеты»</b>.</li>",
+  "<li>Каналы рекламы: лист <b>«Каналы»</b>, канал N = строка N (ссылка …/?r=N, фон - номер с листа «Фоны анкеты»). ",
+  "Новую строку - <b>Опубликовать анкету QPortall</b> (появятся номер, ссылка и счётчики). Оплату отмечайте на «Сайты» в колонке <b>«оплачено»</b>: Да.</li>",
   "<li>Если менялся файл <b>QPortall-4-anketa.gs</b> (приём анкет): Apps Script → <b>Начать развертывание → Управление развертываниями</b> → карандаш → ",
   "Версия: <b>Новая версия</b> → <b>Начать развертывание</b> (адрес не меняется), затем <b>Опубликовать анкету QPortall</b>.</li></ol>"
 ].join("");
@@ -158,20 +158,20 @@ function anketaSubmit(req) {
   } finally { lock.releaseLock(); }
 }
 
-// Лимит новых анкет за день исчерпан — одно письмо владельцу в день, чтобы потолок не забылся.
+// Лимит новых анкет за день исчерпан - одно письмо владельцу в день, чтобы потолок не забылся.
 function anketaLimitMail(props, day, perDay) {
   if (props.getProperty("ANKETA_DAY_MAIL") === day) return;
   props.setProperty("ANKETA_DAY_MAIL", day);
   try {
     MailApp.sendEmail(Session.getEffectiveUser().getEmail(), "QPortall: сегодня достигнут лимит анкет (" + perDay + ")",
-      "Сегодня пришло " + perDay + " новых анкет — это лимит. Следующие люди видят «Сегодня анкет очень много. Попробуйте завтра».\n\n" +
-      "Поднять лимит: таблица «QPage — анкеты», лист «" + ANKETA_SETTINGS_SHEET + "», строка «Новых анкет в день».\n" +
+      "Сегодня пришло " + perDay + " новых анкет - это лимит. Следующие люди видят «Сегодня анкет очень много. Попробуйте завтра».\n\n" +
+      "Поднять лимит: таблица «QPage - анкеты», лист «" + ANKETA_SETTINGS_SHEET + "», строка «Новых анкет в день».\n" +
       "Таблица: " + anketaSs().getUrl());
   } catch (e) { Logger.log("письмо о лимите: " + e); }
 }
 
-// Ответы страницы: только известные вопросы, только текст (у вопросов с галочками — список).
-// Длинное обрезается по ANKETA_LIMITS; ссылка в тексте — out.__links (анкету не принимаем).
+// Ответы страницы: только известные вопросы, только текст (у вопросов с галочками - список).
+// Длинное обрезается по ANKETA_LIMITS; ссылка в тексте - out.__links (анкету не принимаем).
 function anketaClean(src) {
   var out = {}, link = new RegExp(ANKETA_LINK_RE, "i");
   src = src && typeof src === "object" ? src : {};
@@ -283,7 +283,7 @@ function processAnketas() {
   var vals = sh.getDataRange().getDisplayValues();
   for (var i = 1; i < vals.length; i++) {
     if (vals[i][ANKETA_COL.status - 1] !== STATUS_WAIT) continue;
-    // Сборка сайта занимает 1–2 минуты, а запуск скрипта ограничен 6 минутами: остальное — следующим запуском.
+    // Сборка сайта занимает 1-2 минуты, а запуск скрипта ограничен 6 минутами: остальное - следующим запуском.
     if (Date.now() - start > 210000) { anketaSchedule(1000); return; }
     anketaBuild(ss, sh, i + 1);
   }
@@ -311,7 +311,7 @@ function anketaBuild(ss, sh, row) {
       r = makeSite(ss, tab);
       anketaSitesRow(ss, tab, key, vals[ANKETA_COL.edits - 1], vals[ANKETA_COL.channel - 1]);
     });
-    // Входящие файлы уже скопированы в папку «<лист> — фото».
+    // Входящие файлы уже скопированы в папку «<лист> - фото».
     try { var it = DriveApp.getFolderById(PropertiesService.getScriptProperties().getProperty("FOLDER_ID")).getFoldersByName("Анкеты — входящие");
       if (it.hasNext()) { var sub = it.next().getFoldersByName(key.slice(0, 12)); if (sub.hasNext()) sub.next().setTrashed(true); } } catch (e) { Logger.log(e); }
     cell(ANKETA_COL.status).setValues([[STATUS_DONE + " " + Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), "dd.MM HH:mm") +
@@ -322,7 +322,7 @@ function anketaBuild(ss, sh, row) {
   }
 }
 
-// Ответы страницы → как e.namedValues из Google Формы: { "Название вопроса": ["ответ"] }; файлы — ссылками Диска.
+// Ответы страницы → как e.namedValues из Google Формы: { "Название вопроса": ["ответ"] }; файлы - ссылками Диска.
 function anketaNamed(answers, files) {
   var named = {};
   questions().forEach(function (q) {
@@ -337,12 +337,12 @@ function anketaNamed(answers, files) {
   return named;
 }
 
-// От каких ответов зависит строка листа клиента (по умолчанию — от ответа с тем же ключом).
+// От каких ответов зависит строка листа клиента (по умолчанию - от ответа с тем же ключом).
 var ANKETA_DEPS = { languages: ["languages", "formLang"], name: ["name", "nameHe", "nameEn", "languages", "formLang"],
   lat: ["address"], lon: ["address"], workHours: ["workFrom", "workTo"], fridayHours: ["workFrom", "workTo", "fridayTo"] };
 
 // Исправленная анкета → тот же лист. Строку, ответ на который не менялся, оставляем как есть (там могут быть
-// правки владельца, например перевод); изменённые строки — заново (с переводом). Свои строки владельца
+// правки владельца, например перевод); изменённые строки - заново (с переводом). Свои строки владельца
 // (которых анкета не делает, например siteUrl) остаются внизу.
 function anketaUpdateSheet(sh, answers, built) {
   var a = answersByKey(anketaNamed(answers, {}));
@@ -370,7 +370,7 @@ function anketaUpdateSheet(sh, answers, built) {
   sh.getRange(2, 1, height, TAB_HEADER.length).setNumberFormat("@").setValues(rows);
 }
 
-// Новые и удалённые фото исправленной анкеты → папка «<лист> — фото».
+// Новые и удалённые фото исправленной анкеты → папка «<лист> - фото».
 function anketaUpdateMedia(tab, files) {
   var folder = mediaFolder(tab);
   var have = [], it = folder.getFiles();
@@ -390,7 +390,7 @@ function anketaUpdateMedia(tab, files) {
     have.forEach(function (f) { if (s[1].test(f.getName())) f.setTrashed(true); });
     copy(id, function (f) { return s[0] + "." + ext(f, s[2]); });
   });
-  // Фото и документы — в конец, номером после последнего (по номеру в имени идёт порядок на сайте).
+  // Фото и документы - в конец, номером после последнего (по номеру в имени идёт порядок на сайте).
   [["photos", "photo-", /^photo-(\d+)/i], ["docs", "doc-", /^doc-(\d+)/i]].forEach(function (s) {
     var n = 0;
     have.forEach(function (f) { var m = f.getName().match(s[2]); if (m) n = Math.max(n, Number(m[1])); });
@@ -438,7 +438,7 @@ function anketaSitesRow(ss, tab, key, used, channel) {
   if (channel && !String(ch.getDisplayValue()).trim()) ch.setNumberFormat("@").setValues([[String(channel)]]);
 }
 
-// Лимит правок клиента: число в колонке «лимит правок» на листе «Сайты», если пусто — из настроек.
+// Лимит правок клиента: число в колонке «лимит правок» на листе «Сайты», если пусто - из настроек.
 function anketaLimit(ss, tab, set) {
   var def = Number(set.edits) || 0;
   var list = ss.getSheetByName(SITES_SHEET);
@@ -463,7 +463,7 @@ function anketaSheet(ss) {
     sh.getRange(1, 1, 1, ANKETA_HEADER.length).setValues([ANKETA_HEADER]).setFontWeight("bold");
     sh.setFrozenRows(1);
   } else {
-    // Лист из прежней версии — без новых колонок (например «канал»).
+    // Лист из прежней версии - без новых колонок (например «канал»).
     var head = sh.getRange(1, 1, 1, ANKETA_HEADER.length).getDisplayValues()[0];
     ANKETA_HEADER.forEach(function (h, i) { if (!head[i]) sh.getRange(1, i + 1, 1, 1).setValues([[h]]).setFontWeight("bold"); });
   }
@@ -510,7 +510,7 @@ function retryAnketas() {
   }
   if (!n) { notify("Анкет с ошибкой нет: на листе «" + ANKETA_SHEET + "» у всех статус «готово»."); return; }
   processAnketas();
-  notify("Готово: собрано анкет — " + n + ". Статус — на листе «" + ANKETA_SHEET + "».");
+  notify("Готово: собрано анкет - " + n + ". Статус - на листе «" + ANKETA_SHEET + "».");
 }
 
 // ---------- Публикация страницы анкеты на Netlify ----------
@@ -533,7 +533,7 @@ function publishAnketa() {
   notify((r.changed ? "Анкета опубликована: " : "Анкета не менялась, заново не выкладывали (каждая выкладка стоит 15 кредитов Netlify): ") + r.url +
     "\n\nОтветы идут в развертывание " + anketaApi().replace(/^.*\/s\/(.{10}).*$/, "$1…") +
     " (Apps Script → Управление развертываниями: после новой версии файлов обновлять его)." +
-    "\n\nЭто анкета с общим фоном. Ссылки на анкету с другим фоном (дизайн 1, 2, 3…) — на листе «" + BG_SHEET + "»." +
+    "\n\nЭто анкета с общим фоном. Ссылки на анкету с другим фоном (дизайн 1, 2, 3…) - на листе «" + BG_SHEET + "»." +
     (r.notes.length ? "\n\nПроверьте:\n" + r.notes.join("\n") : ""));
 }
 
@@ -544,13 +544,13 @@ function anketaAskApi() {
     '<ol style="padding-left:20px">' +
     '<li>Расширения → Apps Script → справа вверху <b>Начать развертывание → Новое развертывание</b>.</li>' +
     '<li>Шестерёнка «Выберите тип» → <b>Веб-приложение</b>. Запуск от имени: <b>Я</b>. У кого есть доступ: <b>Все</b>.</li>' +
-    '<li><b>Начать развертывание</b> → если Google спросит разрешения — разрешить → скопировать <b>URL веб-приложения</b> и вставить сюда.</li></ol>' +
+    '<li><b>Начать развертывание</b> → если Google спросит разрешения - разрешить → скопировать <b>URL веб-приложения</b> и вставить сюда.</li></ol>' +
     '<input id="t" style="width:100%;padding:6px;font:13px monospace" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">' +
     '<p><button id="b" style="padding:6px 16px">Сохранить и опубликовать</button> <span id="m"></span></p>' +
     '<script>document.getElementById("b").onclick=function(){var m=document.getElementById("m");m.textContent="Публикую, это займёт минуту…";' +
     'google.script.run.withSuccessHandler(function(r){m.innerHTML=r;}).withFailureHandler(function(e){m.textContent=e.message;})' +
     '.saveAnketaApi(document.getElementById("t").value);};</script></div>').setWidth(600).setHeight(420);
-  SpreadsheetApp.getUi().showModalDialog(html, "QPortall — анкета");
+  SpreadsheetApp.getUi().showModalDialog(html, "QPortall - анкета");
 }
 
 // Из окна anketaAskApi. Возвращает HTML для окна.
@@ -592,7 +592,7 @@ function anketaChannelSheet(ss) {
 }
 
 // Счётчики канала (формулы, считаются сами): анкет с этим каналом и сайтов с «оплачено» = Да.
-// Колонки ищутся по заголовку — их можно двигать.
+// Колонки ищутся по заголовку - их можно двигать.
 function anketaChannelFormulas(row) {
   var col = function (sheet, head) {
     var q = "'" + sheet + "'";
@@ -606,7 +606,7 @@ function anketaChannelFormulas(row) {
   ];
 }
 
-// Формулы с запятыми; в таблице с русскими настройками Google ждёт «;» (проверено 28.10: с запятыми — #ERROR!).
+// Формулы с запятыми; в таблице с русскими настройками Google ждёт «;» (проверено 28.10: с запятыми - #ERROR!).
 function anketaSetFormulas(range, list) {
   range.setFormulas([list]);
   SpreadsheetApp.flush();
@@ -634,7 +634,7 @@ function anketaDeploy(ss) {
     var builtin = pic.match(/^встро\S*\s*(?:фон\s*)?(\d+)$/i);
     if (builtin) {
       if (ANKETA_PAGE["bg/" + builtin[1] + ".svg"]) groups[num] = { img: "bg/" + builtin[1] + ".svg", color: color };
-      else notes.push("«" + BG_SHEET + "», строка " + num + ": встроенного фона " + builtin[1] + " нет (есть 1–5)");
+      else notes.push("«" + BG_SHEET + "», строка " + num + ": встроенного фона " + builtin[1] + " нет (есть 1-5)");
       return;
     }
     var blob = null, id = driveIdFromUrl(pic);
@@ -647,7 +647,7 @@ function anketaDeploy(ss) {
     images["bg/" + num + "." + ext] = blob;
     groups[num] = { img: "bg/" + num + "." + ext, color: color };
   });
-  // Каналы: фон канала — номер строки листа «Фоны анкеты».
+  // Каналы: фон канала - номер строки листа «Фоны анкеты».
   var chSheet = anketaChannelSheet(ss);
   var chRows = chSheet.getDataRange().getDisplayValues();
   var channels = {};
@@ -677,7 +677,7 @@ function anketaDeploy(ss) {
   var files = {};
   Object.keys(ANKETA_PAGE).forEach(function (rel) { files[rel] = ANKETA_PAGE[rel]; });
   var configJs = "window.QP_ANKETA = " + JSON.stringify(config) + ";\n";
-  // Метка версии у файлов — чтобы браузер не взял старую анкету из кеша.
+  // Метка версии у файлов - чтобы браузер не взял старую анкету из кеша.
   var stamp = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
     configJs.replace(/"version":"\d+"/, "") + files["anketa.js"] + files["anketa.css"], Utilities.Charset.UTF_8)).replace(/[^a-z0-9]/gi, "").slice(0, 10);
   files["index.html"] = files["index.html"].replace(/\?v=dev/g, "?v=" + stamp);
@@ -706,7 +706,7 @@ function anketaDeploy(ss) {
     props.setProperty("ANKETA_HASH", fingerprint);
   }
   props.setProperty("ANKETA_URL", url);
-  // Номера строк и готовые ссылки — рядом с каждой картинкой.
+  // Номера строк и готовые ссылки - рядом с каждой картинкой.
   for (var i = 1; i < bgRows.length; i++) {
     var num = String(i);
     if (bgRows[i][BG.num - 1] !== num) bgSheet.getRange(i + 1, BG.num, 1, 1).setValues([[num]]);
@@ -715,7 +715,7 @@ function anketaDeploy(ss) {
     if (link) cellR.setRichTextValue(SpreadsheetApp.newRichTextValue().setText(link).setLinkUrl(link).build());
     else if (bgRows[i][BG.link - 1]) cellR.setValues([[""]]);
   }
-  // Каналы: номер, ссылка …/?r=N и счётчики — у каждой строки с названием.
+  // Каналы: номер, ссылка …/?r=N и счётчики - у каждой строки с названием.
   for (var j = 1; j < chRows.length; j++) {
     var cn = String(j), named = String(chRows[j][CH.name - 1] || "").trim();
     if (chRows[j][CH.num - 1] !== cn) chSheet.getRange(j + 1, CH.num, 1, 1).setNumberFormat("@").setValues([[cn]]);

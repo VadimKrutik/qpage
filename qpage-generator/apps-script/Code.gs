@@ -1,17 +1,17 @@
 /*
- * QPage — анкета и генератор сайтов внутри Google Таблицы (Google Apps Script).
+ * QPage - анкета и генератор сайтов внутри Google Таблицы (Google Apps Script).
  * Скрипт привязан к таблице: «Расширения → Apps Script».
  *
  * Что делает:
- *  1. Меню «QPortall → Первая настройка» (setup) — один раз создаёт Google Форму «Анкета для сайта»,
- *     связывает её с этой таблицей, создаёт на Диске папку «QPage — сайты».
+ *  1. Меню «QPortall → Первая настройка» (setup) - один раз создаёт Google Форму «Анкета для сайта»,
+ *     связывает её с этой таблицей, создаёт на Диске папку «QPage - сайты».
  *  2. Каждый новый ответ превращается в отдельный лист (например «studio-lana»): строка на каждое
- *     поле, колонки ru / he / en. Недостающие языки — машинный перевод, адрес — координаты.
- *  3. Сразу после ответа по этому листу собирается сайт: папка и ZIP в «QPage — сайты»,
- *     ссылки — на листе «Сайты». Поправили лист — «QPortall → Сделать сайт из этого листа».
- *  4. doGet() — для генератора на компьютере (generate.js), по секретному ключу.
+ *     поле, колонки ru / he / en. Недостающие языки - машинный перевод, адрес - координаты.
+ *  3. Сразу после ответа по этому листу собирается сайт: папка и ZIP в «QPage - сайты»,
+ *     ссылки - на листе «Сайты». Поправили лист - «QPortall → Сделать сайт из этого листа».
+ *  4. doGet() - для генератора на компьютере (generate.js), по секретному ключу.
  *  5. Если подключён Netlify («QPortall → Подключить Netlify»), сайт сразу публикуется в интернете:
- *     у каждого листа свой сайт на Netlify, ссылка — на листе «Сайты».
+ *     у каждого листа свой сайт на Netlify, ссылка - на листе «Сайты».
  *
  * Файл собирается командой node build-gs.js: сюда же добавляются ядро генератора (QPageCore)
  * и файлы шаблона (TEMPLATE_FILES, TEMPLATE_TEXT).
@@ -63,7 +63,7 @@ function designOptions() {
   return ["showcase", "strict", "classic"].map(function (k) { return QPageCore.DESIGNS[k].label; });
 }
 
-// Необязательные блоки — цепочкой «Да / Нет»: «Да» открывает страницу с вопросами блока,
+// Необязательные блоки - цепочкой «Да / Нет»: «Да» открывает страницу с вопросами блока,
 // «Нет» сразу ведёт к следующему блоку (так клиент не видит ненужных вопросов).
 // Цепочка стоит в форме перед разделом «Оформление».
 var DESIGN_SECTION = "Оформление";
@@ -73,15 +73,15 @@ function gates() {
       askHelp: "Отдельная таблица цен (кроме цен у услуг выше). Подходит, если позиций много.",
       detail: "Прайс-лист: цены", questions: [
         { key: "pricelist", title: "Цены (прайс-лист)", type: "paragraph", t: true,
-          help: "По строке на позицию: название, тире, цена. Например: Замена смесителя — 250 (без тире цена не распознается)." },
+          help: "По строке на позицию: название, тире, цена. Например: Замена смесителя - 250 (без тире цена не распознается)." },
         { key: "priceLink", title: "Ссылка на файл с ценами (если есть)", type: "text", validate: "url", plain: "ссылка на прайс (файл или страница)",
           help: "Например, ссылка на PDF в Google Диске с доступом «Все, у кого есть ссылка». Начинается с https://" }] },
     { key: "wantReviews", page: "Отзывы клиентов", ask: "Показать на сайте отзывы клиентов?",
       askHelp: "До " + MAX_REVIEWS + " коротких отзывов. Пишите только настоящие отзывы.",
       detail: "Отзывы клиентов: тексты", questions: [
         { key: "reviews", title: "Тексты отзывов", type: "paragraph", t: true,
-          help: "Каждый отзыв с новой строки, имя клиента в конце через тире. Например: Всё сделали за один день, спасибо! — Анна К. " +
-            "Имя — только с согласия клиента, можно без него." }] },
+          help: "Каждый отзыв с новой строки, имя клиента в конце через тире. Например: Всё сделали за один день, спасибо! - Анна К. " +
+            "Имя - только с согласия клиента, можно без него." }] },
     { key: "wantSteps", page: "Как мы работаем", ask: "Показать, как проходит работа с вами (по шагам)?",
       askHelp: "Например: 1. Звонок 2. Выезд и оценка 3. Работа 4. Гарантия.",
       detail: "Как мы работаем: шаги", questions: [
@@ -96,7 +96,7 @@ function gates() {
       detail: "Видео: ссылка", questions: [
         { key: "video", title: "Ссылка на видео", type: "text", validate: "url", plain: "ссылка на видео (YouTube, Instagram, TikTok…)",
           help: "Скопируйте ссылку (кнопка «Поделиться»). Видео с YouTube встроится в сайт и загрузится по нажатию; " +
-            "из Instagram, TikTok и других — на сайте будет кнопка «Смотреть видео», которая откроет его там." }] }
+            "из Instagram, TikTok и других - на сайте будет кнопка «Смотреть видео», которая откроет его там." }] }
   ];
 }
 var TAB_HEADER = ["поле", "что это", "значение", "ru", "he", "en", "проверить перевод"];
@@ -105,13 +105,13 @@ var SITES_SHEET = "Сайты";
 var SITES_HEADER = ["лист анкеты", "обновлён", "папка сайта", "ZIP для Netlify Drop", "проверить", "ошибки", "фото и логотип",
   "сайт в интернете", "Netlify: управление сайтом"];
 // Вопросы «Загрузка файлов» скрипт создать не может (так устроен Google), их добавляют в форму вручную
-// с ровно такими названиями. Без них фото можно положить в папку «<лист> — фото» на Диске.
+// с ровно такими названиями. Без них фото можно положить в папку «<лист> - фото» на Диске.
 var UPLOAD_LOGO = "Логотип";
 var UPLOAD_PHOTOS = "Фотографии для сайта";
 var UPLOAD_MAIN = "Главное фото";                     // горизонтальное, крупно на первом экране
-var UPLOAD_PORTRAIT = "Ваше фото";                    // владелец или мастер — на первый экран
+var UPLOAD_PORTRAIT = "Ваше фото";                    // владелец или мастер - на первый экран
 var UPLOAD_DOCS = "Фото лицензий и дипломов";         // вместо ссылки на скан документа
-// Название вопроса могут немного изменить («Фото для сайта», «Логотип компании») — узнаём по началу.
+// Название вопроса могут немного изменить («Фото для сайта», «Логотип компании») - узнаём по началу.
 var UPLOAD_MATCH = { logo: /^\s*логотип/i, main: /^\s*главное\s+фото/i, photos: /^\s*фото(?!.*(лиценз|диплом|документ|сертифик|владельц|мастер))/i,
   portrait: /^\s*ваше\s+фото|^\s*фото\s+(владельц|мастер)/i, docs: /^\s*фото.*(лиценз|диплом|документ|сертифик)/i };
 
@@ -122,7 +122,7 @@ function uploadTitle(titles, kind) {
 var SITES_FOLDER = "QPage — сайты";
 
 // Описание анкеты. По полю title ответ из формы находит своё поле (key).
-// t: true — текст, который нужен на каждом языке сайта.
+// t: true - текст, который нужен на каждом языке сайта.
 function questions() {
   var q = [
     { section: "Основное", help: "Эти данные появятся на сайте. Всё, кроме отмеченного звёздочкой, можно пропустить." },
@@ -135,13 +135,13 @@ function questions() {
     { key: "kind", title: "Чем вы занимаетесь — одной строкой", type: "text", required: true, t: true,
       help: "Например: Ремонт бытовой техники" },
     { key: "tagline", title: "Главное предложение для клиентов", type: "paragraph", required: true, t: true,
-      help: "1–2 предложения, до 400 знаков: что вы делаете и чем вы лучше. Стоит под цветным блоком, над главным фото. Большой текст — в вопросе «Ваш главный текст» (для варианта «Текстовый блок»)." },
+      help: "1-2 предложения, до 400 знаков: что вы делаете и чем вы лучше. Стоит под цветным блоком, над главным фото. Большой текст - в вопросе «Ваш главный текст» (для варианта «Текстовый блок»)." },
     { key: "facts", title: "Три коротких преимущества", type: "paragraph", t: true,
       help: "Каждое с новой строки, коротко. Например: Работаем с 2012 года" },
     { key: "about", title: "Коротко о вас", type: "paragraph", t: true,
-      help: "2–4 предложения. Новый абзац — с новой строки." },
+      help: "2-4 предложения. Новый абзац - с новой строки." },
     { key: "story", title: "Ваш главный текст", type: "paragraph", t: true,
-      help: "Только для варианта «Текстовый блок»: большой текст сразу под первым экраном — о вас, о вашем деле или просто ваши мысли. Новый абзац — с новой строки. В других вариантах не показывается." },
+      help: "Только для варианта «Текстовый блок»: большой текст сразу под первым экраном - о вас, о вашем деле или просто ваши мысли. Новый абзац - с новой строки. В других вариантах не показывается." },
     { key: "legal", title: "Официальное название и номер (если есть)", type: "text", plain: "официальное название и номер (подвал сайта)",
       help: "Если вы частный предприниматель или юридическое лицо: официальное название и номер, как в документах. " +
         "Например: Иван Петров, עוסק מורשה 123456789. Покажем мелким шрифтом внизу сайта." },
@@ -150,20 +150,20 @@ function questions() {
     { key: "phone", title: "Телефон", type: "text", required: true, validate: "phone",
       help: "Например: 050-123-4567" },
     { key: "whatsapp", title: "Номер WhatsApp", type: "text", validate: "phone",
-      help: "Если пусто — кнопки WhatsApp на сайте не будет." },
-    { key: "telegram", title: "Telegram — имя пользователя", type: "text", help: "Без @. Если пусто — кнопки не будет." },
+      help: "Если пусто - кнопки WhatsApp на сайте не будет." },
+    { key: "telegram", title: "Telegram — имя пользователя", type: "text", help: "Без @. Если пусто - кнопки не будет." },
     { key: "email", title: "Эл. почта для сайта", type: "text", validate: "email" },
     { key: "workDays", title: "Рабочие дни", type: "checkbox", options: DAYS, plain: "рабочие дни (вс, пн, вт, ср, чт, пт, сб)",
-      help: "Отметьте дни, когда вы работаете. Если не отметить — часов работы на сайте не будет." },
+      help: "Отметьте дни, когда вы работаете. Если не отметить - часов работы на сайте не будет." },
     { key: "workFrom", title: "Начало работы", type: "list", options: timeOptions(5, 14) },
     { key: "workTo", title: "Конец работы", type: "list", options: timeOptions(10, 24) },
     { key: "fridayTo", title: "В пятницу работаем до", type: "list", options: [SAME_AS_USUAL].concat(timeOptions(10, 20)),
       help: "Если в пятницу заканчиваете раньше. Пятница должна быть отмечена в рабочих днях." },
-    { key: "address", title: "Адрес", type: "text", t: true, help: "Улица, дом, город. Если пусто — блока с картой не будет." },
+    { key: "address", title: "Адрес", type: "text", t: true, help: "Улица, дом, город. Если пусто - блока с картой не будет." },
     { key: "areas", title: "Районы и города, где вы работаете", type: "text", t: true,
       help: "Если выезжаете к клиентам: города или районы через запятую. Например: Хайфа, Крайот, Нешер" },
 
-    { section: "Услуги и цены", help: "До " + MAX_SERVICES + " услуг или товаров. Цена — число в шекелях «от»; пусто — «цена по запросу»." }
+    { section: "Услуги и цены", help: "До " + MAX_SERVICES + " услуг или товаров. Цена - число в шекелях «от»; пусто - «цена по запросу»." }
   ];
   for (var i = 1; i <= MAX_SERVICES; i++) {
     q.push({ key: "service" + i + "Name", title: "Услуга " + i + ": название", type: "text", required: i === 1, t: true });
@@ -183,18 +183,18 @@ function questions() {
   q.push({ key: "color", title: "Основной цвет сайта", type: "choice", options: COLORS.map(function (c) { return c.label; }), required: true });
   q.push({ key: "design", title: "На чём сделать акцент?", type: "choice", options: designOptions(),
     plain: "акцент: " + designOptions().join(" / "),
-    help: "Верх сайта у всех вариантов одинаковый: в цветной заливке ваше фото, чем вы занимаетесь, название и преимущества; ниже — главное предложение и «Главное фото» крупно. " +
-      "Фото-витрина: дальше мозаика из фото работ (лучше 8; 5-е и 8-е — во всю ширину, им лучше быть горизонтальными). " +
-      "Текстовый блок: дальше «Ваш главный текст». Остальное у всех одинаковое. Если не выбрать — Классический вариант." });
+    help: "Верх сайта у всех вариантов одинаковый: в цветной заливке ваше фото, чем вы занимаетесь, название и преимущества; ниже - главное предложение и «Главное фото» крупно. " +
+      "Фото-витрина: дальше мозаика из фото работ (лучше 8; 5-е и 8-е - во всю ширину, им лучше быть горизонтальными). " +
+      "Текстовый блок: дальше «Ваш главный текст». Остальное у всех одинаковое. Если не выбрать - Классический вариант." });
   q.push({ key: "cta", title: "Главная кнопка сайта", type: "choice", options: CTA_OPTIONS, plain: "главная кнопка: " + CTA_OPTIONS.join(" / "),
     help: "Что чаще делают ваши клиенты: оставляют заявку, заказывают или записываются на приём." });
   q.push({ key: "captions", title: "Подписи к фотографиям", type: "paragraph", t: true,
-    help: "Если будете присылать фото: по строке на каждое фото, в том же порядке: Название — цена (цену можно не писать). " +
+    help: "Если будете присылать фото: по строке на каждое фото, в том же порядке: Название - цена (цену можно не писать). " +
       "Если нет «Главного фото», первое из этих фото покажем крупно вверху сайта. Можно пропустить." });
   q.push({ key: "blocks", title: "Что ещё показать на сайте?", type: "checkbox", options: BLOCK_OPTIONS.map(function (b) { return b.label; }) });
   q.push({ key: "a11y", title: "Добавить на сайт заявление о доступности?", type: "choice", options: [YES, NO], plain: "заявление о доступности (Да/Нет)",
     help: "Короткий раздел «Доступность сайта» с контактом для обращений. По закону Израиля о равных правах людей с инвалидностью " +
-      "такое заявление нужно сайтам, которые обслуживают клиентов (небольшие бизнесы иногда освобождены). Если не уверены — выберите «Да»." });
+      "такое заявление нужно сайтам, которые обслуживают клиентов (небольшие бизнесы иногда освобождены). Если не уверены - выберите «Да»." });
   q.push({ key: "consent", title: "Согласие", type: "checkbox", required: true,
     options: ["Я согласен(на), что эти данные будут опубликованы на сайте"] });
   return q;
@@ -206,21 +206,21 @@ function setup() {
   var props = PropertiesService.getScriptProperties();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   if (!ss) {
-    throw new Error("Этот проект не привязан к таблице. Откройте таблицу «QPage — анкеты», " +
+    throw new Error("Этот проект не привязан к таблице. Откройте таблицу «QPage - анкеты», " +
       "в её меню «Расширения → Apps Script», вставьте код туда и запускайте оттуда. Этот проект можно удалить.");
   }
-  // Повторный запуск в уже настроенной таблице не нужен; если же прежняя форма удалена — настраиваем заново.
+  // Повторный запуск в уже настроенной таблице не нужен; если же прежняя форма удалена - настраиваем заново.
   if (props.getProperty("FORM_ID") && props.getProperty("SHEET_ID") === ss.getId() && ss.getFormUrl() &&
       FormApp.openByUrl(ss.getFormUrl()).getId() === props.getProperty("FORM_ID")) {
     // Ничего не создаём, только возвращаем меню QPortall в таблицу и показываем ссылки.
     installMenuTrigger(ss);
     addMenu();
-    notify("Всё уже настроено, меню QPortall — в таблице.\n\n" + links());
+    notify("Всё уже настроено, меню QPortall - в таблице.\n\n" + links());
     return;
   }
   var form;
   if (ss.getFormUrl()) {
-    // Таблица уже связана с анкетой — берём её, вторую не создаём.
+    // Таблица уже связана с анкетой - берём её, вторую не создаём.
     form = FormApp.openByUrl(ss.getFormUrl());
   } else {
     form = createForm();
@@ -286,7 +286,7 @@ function links() {
     "Ключ для генератора на компьютере (token): " + p.getProperty("TOKEN");
 }
 
-// Окно в таблице, если она открыта; иначе (триггер) — в журнал. Адреса в окне — кликабельные ссылки.
+// Окно в таблице, если она открыта; иначе (триггер) - в журнал. Адреса в окне - кликабельные ссылки.
 function notify(msg) {
   Logger.log(msg);
   try {
@@ -323,15 +323,15 @@ function addMenu() {
 
 function createForm() {
   var form = FormApp.create("Анкета для сайта");
-  form.setDescription("Заполните анкету — по ней мы сделаем сайт вашего бизнеса. " +
+  form.setDescription("Заполните анкету - по ней мы сделаем сайт вашего бизнеса. " +
     "Ответы видим только мы; на сайте появятся только данные из анкеты.");
   form.setCollectEmail(false);
   form.setProgressBar(true);
 
   questions().forEach(function (q, i) {
-    if (q.gate || q.gateOf) return; // цепочка «Да / Нет» — ниже, в ensureGates
+    if (q.gate || q.gateOf) return; // цепочка «Да / Нет» - ниже, в ensureGates
     if (q.section) {
-      // Первый раздел — это начало формы, отдельная страница для него не нужна.
+      // Первый раздел - это начало формы, отдельная страница для него не нужна.
       if (i === 0) form.addSectionHeaderItem().setTitle(q.section).setHelpText(q.help || "");
       else form.addPageBreakItem().setTitle(q.section).setHelpText(q.help || "");
       return;
@@ -412,7 +412,7 @@ function updateForm() {
   var form = FormApp.openById(p.getProperty("FORM_ID"));
   var titles = function () { return form.getItems().map(function (it) { return it.getTitle(); }); };
   var changed = [];
-  // Вопросы прошлых версий: переименовать, ненужные — убрать (старые ответы в таблице остаются).
+  // Вопросы прошлых версий: переименовать, ненужные - убрать (старые ответы в таблице остаются).
   form.getItems().forEach(function (it) {
     var t = it.getTitle();
     if (RENAMED[t] && it.getType() !== FormApp.ItemType.PAGE_BREAK && titles().indexOf(RENAMED[t]) === -1) { it.setTitle(RENAMED[t]); changed.push("«" + t + "» → «" + RENAMED[t] + "»"); }
@@ -421,7 +421,7 @@ function updateForm() {
     var t = it.getTitle();
     if (OBSOLETE.some(function (re) { return re.test(t); })) { form.deleteItem(it); changed.push("убран «" + t + "»"); }
   });
-  // Подсказки и проверки у уже существующих вопросов — как в новой версии.
+  // Подсказки и проверки у уже существующих вопросов - как в новой версии.
   questions().forEach(function (q) {
     if (!q.key) return;
     form.getItems().forEach(function (it) {
@@ -451,7 +451,7 @@ function updateForm() {
     added.push(q.title);
   });
   ensureGates(form).forEach(function (page) { added.push(/[«»]/.test(page) ? page : "блок «" + page + "» (Да / Нет)"); });
-  // Подписи к фото — сразу после вопроса с фото: сначала загружают фото, потом подписывают.
+  // Подписи к фото - сразу после вопроса с фото: сначала загружают фото, потом подписывают.
   var photosAt = titles().indexOf(uploadTitle(titles(), "photos"));
   var capAt = titles().indexOf("Подписи к фотографиям");
   if (photosAt !== -1 && capAt !== -1 && capAt !== photosAt + 1) {
@@ -507,36 +507,36 @@ var HELP_HTML = [
   "<li>Закройте вкладку Apps Script, обновите таблицу (<b>F5</b>).</li>",
   "<li>Если в анкете появились новые вопросы: <b>QPortall → Обновить форму</b>.</li></ol>",
   "<h3>2. Новый клиент</h3><ol>",
-  "<li><b>QPortall → Ссылки</b> → «Ссылка для клиента» — отправьте её клиенту.</li>",
-  "<li>После отправки анкеты сайт собирается сам за 1–2 минуты: новый лист клиента и строка на листе <b>«Сайты»</b>.</li>",
-  "<li>На «Сайты»: <b>Открыть сайт</b> — сайт в интернете, <b>Папка</b> и <b>ZIP</b> — файлы на Диске, <b>Фото</b> — фото клиента, ",
-  "<b>Netlify</b> — управление сайтом. Колонка <b>«проверить»</b> — что стоит посмотреть (перевод, большие фото, ссылки).</li></ol>",
+  "<li><b>QPortall → Ссылки</b> → «Ссылка для клиента» - отправьте её клиенту.</li>",
+  "<li>После отправки анкеты сайт собирается сам за 1-2 минуты: новый лист клиента и строка на листе <b>«Сайты»</b>.</li>",
+  "<li>На «Сайты»: <b>Открыть сайт</b> - сайт в интернете, <b>Папка</b> и <b>ZIP</b> - файлы на Диске, <b>Фото</b> - фото клиента, ",
+  "<b>Netlify</b> - управление сайтом. Колонка <b>«проверить»</b> - что стоит посмотреть (перевод, большие фото, ссылки).</li></ol>",
   "<h3>3. Поправить сайт</h3><ol>",
-  "<li>Откройте лист клиента. Тексты — в колонках <b>ru / he / en</b>, остальное — в колонке <b>«значение»</b>:",
-  "<ul><li><b>languages</b> — языки сайта через запятую, первый — основной: <code>ru,he,en</code> (убрать язык — стереть его);</li>",
-  "<li><b>color</b> — цвет в виде <code>#1565C0</code>; <b>phone</b>, <b>whatsapp</b>, <b>email</b> — контакты;</li>",
-  "<li><b>workDays</b> — дни (вс, пн, вт…), <b>workHours</b> — <code>8:00-19:00</code>, <b>fridayHours</b> — часы в пятницу;</li>",
-  "<li><b>blocks</b> — <code>map,form,qr</code>; <b>cta</b> — главная кнопка; <b>a11y</b> — Да/Нет.</li></ul></li>",
+  "<li>Откройте лист клиента. Тексты - в колонках <b>ru / he / en</b>, остальное - в колонке <b>«значение»</b>:",
+  "<ul><li><b>languages</b> - языки сайта через запятую, первый - основной: <code>ru,he,en</code> (убрать язык - стереть его);</li>",
+  "<li><b>color</b> - цвет в виде <code>#1565C0</code>; <b>phone</b>, <b>whatsapp</b>, <b>email</b> - контакты;</li>",
+  "<li><b>workDays</b> - дни (вс, пн, вт…), <b>workHours</b> - <code>8:00-19:00</code>, <b>fridayHours</b> - часы в пятницу;</li>",
+  "<li><b>blocks</b> - <code>map,form,qr</code>; <b>cta</b> - главная кнопка; <b>a11y</b> - Да/Нет.</li></ul></li>",
   "<li>Стоя на листе клиента (или на его строке в «Сайты»): <b>QPortall → Сделать сайт из этого листа</b>. ",
   "Адрес сайта в интернете не меняется. Окно «Сайт готов» закройте кнопкой OK.</li>",
-  "<li>Фото: папка <b>«&lt;лист&gt; — фото»</b> на Диске (ссылка «Фото»). Логотип назовите <b>logo.png</b>, ",
+  "<li>Фото: папка <b>«&lt;лист&gt; - фото»</b> на Диске (ссылка «Фото»). Логотип назовите <b>logo.png</b>, ",
   "остальные фото идут в галерею по алфавиту. Тяжёлые фото и HEIC (iPhone) генератор сам уменьшит и переведёт в JPG. Потом снова «Сделать сайт».</li></ol>",
   "<h3>4. Удалить сайт из интернета</h3><ol>",
   "<li>На «Сайты» нажмите <b>Netlify</b> у нужного сайта → <b>Project configuration</b> → вкладка <b>Configuration</b> → ",
   "внизу <b>Danger zone</b> → <b>Delete project</b>.</li>",
   "<li>Лист клиента и строку в «Сайты» можно удалить вручную (правой кнопкой по вкладке → Удалить).</li></ol>",
   "<h3>5. Если что-то не так</h3><ul>",
-  "<li>Окно «выполняется скрипт» висит — обычно сайт уже готов, окно просто ждёт OK во вкладке таблицы.</li>",
-  "<li>Несколько анкет сразу — собираются по очереди, ничего делать не нужно.</li>",
-  "<li>Меню QPortall пропало — обновите таблицу (F5); не помогло — в Apps Script выберите функцию <b>setup</b> и нажмите «Выполнить».</li>",
-  "<li>Сайт в браузере выглядит по-старому — нажмите <b>Ctrl+F5</b> (на телефоне — откройте в режиме инкогнито).</li></ul>"
+  "<li>Окно «выполняется скрипт» висит - обычно сайт уже готов, окно просто ждёт OK во вкладке таблицы.</li>",
+  "<li>Несколько анкет сразу - собираются по очереди, ничего делать не нужно.</li>",
+  "<li>Меню QPortall пропало - обновите таблицу (F5); не помогло - в Apps Script выберите функцию <b>setup</b> и нажмите «Выполнить».</li>",
+  "<li>Сайт в браузере выглядит по-старому - нажмите <b>Ctrl+F5</b> (на телефоне - откройте в режиме инкогнито).</li></ul>"
 ].join("");
 
 function showHelp() {
   var page = HtmlService.createHtmlOutput('<div style="font:14px/1.5 Arial,sans-serif">' + HELP_HTML +
     (typeof ANKETA_HELP === "string" ? ANKETA_HELP : "") + "</div>")
     .setWidth(640).setHeight(560);
-  SpreadsheetApp.getUi().showModalDialog(page, "QPortall — инструкция");
+  SpreadsheetApp.getUi().showModalDialog(page, "QPortall - инструкция");
 }
 
 // ---------- 2. Новый ответ → лист сайта ----------
@@ -589,7 +589,7 @@ function answersByKey(named) {
   questions().forEach(function (q) {
     if (!q.key) return;
     var v = named[q.title];
-    // Ответ, данный до переименования вопроса, — под старым названием.
+    // Ответ, данный до переименования вопроса, - под старым названием.
     if (v == null) Object.keys(RENAMED).forEach(function (old) { if (RENAMED[old] === q.title && named[old] != null) v = named[old]; });
     out[q.key] = String(Array.isArray(v) ? v.join(", ") : (v == null ? "" : v)).trim();
   });
@@ -607,7 +607,7 @@ function buildSiteSheet(ss, named) {
   var a = answersByKey(named);
   var rows = siteRows(a);
   var tabName = uniqueSheetName(ss, slugify(a.nameEn || a.name));
-  // Новый лист — сразу после «Сайты» (вторым слева), чтобы не искать его в конце.
+  // Новый лист - сразу после «Сайты» (вторым слева), чтобы не искать его в конце.
   var sites = ss.getSheetByName(SITES_SHEET);
   var sh = ss.insertSheet(tabName, sites ? sites.getIndex() : 0);
   sh.getRange(1, 1, 1, TAB_HEADER.length).setValues([TAB_HEADER]).setFontWeight("bold");
@@ -616,7 +616,7 @@ function buildSiteSheet(ss, named) {
   sh.setColumnWidth(2, 220);
   [4, 5, 6].forEach(function (c) { sh.setColumnWidth(c, 280); });
 
-  // Файлы из анкеты — в папку клиента «<лист> — фото»; логотип получает имя logo.*
+  // Файлы из анкеты - в папку клиента «<лист> - фото»; логотип получает имя logo.*
   var media = mediaFolder(tabName);
   var copy = function (id, name) {
     try { var f = DriveApp.getFileById(id); f.makeCopy(name(f), media); }
@@ -642,8 +642,8 @@ function buildSiteSheet(ss, named) {
 }
 
 // Строки листа клиента (поле | что это | значение | ru | he | en | проверить перевод) из ответов анкеты.
-// Тексты на недостающие языки — машинный перевод, адрес — координаты.
-// keep(key) — при исправлении анкеты: прежняя строка листа, если ответ не менялся (её не переводим заново,
+// Тексты на недостающие языки - машинный перевод, адрес - координаты.
+// keep(key) - при исправлении анкеты: прежняя строка листа, если ответ не менялся (её не переводим заново,
 // правки владельца в ней сохраняются), иначе null.
 function siteRows(a, keep) {
   var src = langByLabel(a.formLang) || LANGS[0];
@@ -660,7 +660,7 @@ function siteRows(a, keep) {
     rows.push(r);
   };
 
-  add("languages", "языки сайта (первый — основной)", siteCodes.join(","));
+  add("languages", "языки сайта (первый - основной)", siteCodes.join(","));
   add("color", "основной цвет", colorValue(a.color));
   add("blocks", "доп. блоки: map, form, qr", BLOCK_OPTIONS.filter(function (b) {
     return a.blocks.indexOf(b.label) !== -1;
@@ -711,7 +711,7 @@ function siteRows(a, keep) {
   return rows;
 }
 
-// Ответ на вопрос «Загрузка файлов» — ссылки вида https://drive.google.com/open?id=...
+// Ответ на вопрос «Загрузка файлов» - ссылки вида https://drive.google.com/open?id=...
 function fileIds(answer) {
   var text = Array.isArray(answer) ? answer.join(",") : String(answer || "");
   var ids = [], re = /id=([\w-]+)/g, m;
@@ -726,8 +726,8 @@ function mediaFolder(tabName) {
   return it.hasNext() ? it.next() : root.createFolder(name);
 }
 
-// Картинки из папки клиента: logo.* — логотип, main.* — главное фото, portrait.* — фото владельца, doc-* — фото документов,
-// остальные (по имени) — галерея.
+// Картинки из папки клиента: logo.* - логотип, main.* - главное фото, portrait.* - фото владельца, doc-* - фото документов,
+// остальные (по имени) - галерея.
 // Тяжёлые фото и HEIC (iPhone) идут на сайт уменьшенной копией (см. siteImage), оригиналы остаются в папке.
 function collectMedia(tabName) {
   var folder = mediaFolder(tabName);
@@ -776,7 +776,7 @@ function mediaFiles(media) {
 // (миниатюру нужного размера): она в JPG, повёрнута как надо, без скрытых данных (места съёмки).
 // Готовые копии лежат в подпапке «для сайта (сжатые)», при пересборке их не делаем заново.
 var PHOTO_MAX_PX = 1600, LOGO_MAX_PX = 800;   // длинная сторона
-var MIN_PX = { main: 1200, photo: 800, portrait: 300, doc: 600 };   // меньше по ширине — фото на сайте растянется и будет нечётким
+var MIN_PX = { main: 1200, photo: 800, portrait: 300, doc: 600 };   // меньше по ширине - фото на сайте растянется и будет нечётким
 var COMPRESS_FROM = 300000;                    // байт: файлы меньше этого идут как есть
 var HEIC_MIME = /^image\/hei[cf]/i;
 var SMALL_DIR = "для сайта (сжатые)";
@@ -798,8 +798,8 @@ function siteImage(orig, folder, isLogo) {
     }
     var blob = driveThumbnail(orig.getId(), isLogo ? LOGO_MAX_PX : PHOTO_MAX_PX);
     var ext = blob && QPageCore.IMAGE_EXT[blob.getContentType()];
-    // Прозрачный PNG-логотип в JPG потерял бы прозрачность — тогда оставляем оригинал.
-    if (!ext) return orig; // Диск копию не дал — попробуем при следующей сборке
+    // Прозрачный PNG-логотип в JPG потерял бы прозрачность - тогда оставляем оригинал.
+    if (!ext) return orig; // Диск копию не дал - попробуем при следующей сборке
     if (isLogo && orig.getMimeType() === "image/png" && ext === "jpg") return keep();
     if (!QPageCore.imageSize(blob.getBytes().slice(0, 65536))) return orig;
     if (!heic && blob.getBytes().length >= orig.getSize()) return keep();
@@ -887,7 +887,7 @@ function uniqueSheetName(ss, base) {
 function makeSiteFromActiveSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getActiveSheet();
-  // На листе «Сайты» — сайт из выделенной строки.
+  // На листе «Сайты» - сайт из выделенной строки.
   if (sh.getName() === SITES_SHEET && sh.getActiveCell().getRow() > 1) {
     var tab = sh.getRange(sh.getActiveCell().getRow(), 1).getDisplayValue();
     if (ss.getSheetByName(tab)) sh = ss.getSheetByName(tab);
@@ -907,7 +907,7 @@ function makeSiteFromActiveSheet() {
 
 var MIME = { html: "text/html", css: "text/css", js: "application/javascript", svg: "image/svg+xml", xml: "application/xml" };
 
-// Куда ведёт «Заказать сайт»: своя анкета QPortall с общим фоном (фоны групп — только для ссылок, которые
+// Куда ведёт «Заказать сайт»: своя анкета QPortall с общим фоном (фоны групп - только для ссылок, которые
 // владелец раздаёт сам), если она опубликована; иначе свойство скрипта ORDER_URL, иначе ссылка на Google Форму.
 function orderUrl() {
   var p = PropertiesService.getScriptProperties();
@@ -920,7 +920,7 @@ function makeSite(ss, tabName) {
   var rows = ss.getSheetByName(tabName).getDataRange().getDisplayValues();
   var media = collectMedia(tabName);
   var fields = QPageCore.rowsToFields(rows);
-  // Внизу каждого сайта «Сайт сделан на QPage · Заказать сайт» ведёт на анкету (каждый сайт — реклама следующего).
+  // Внизу каждого сайта «Сайт сделан на QPage · Заказать сайт» ведёт на анкету (каждый сайт - реклама следующего).
   if (!fields.madeByUrl) fields.madeByUrl = { value: orderUrl() };
   // Адрес сайта в интернете нужен ещё до сборки: по нему карта сайта (sitemap.xml), canonical и превью ссылок.
   // Поэтому сайт на Netlify берём (или создаём) заранее. Свой адрес можно задать строкой siteUrl в листе.
@@ -945,7 +945,7 @@ function makeSite(ss, tabName) {
   var notes = media.notes.concat(r.notes);
   var root = DriveApp.getFolderById(PropertiesService.getScriptProperties().getProperty("FOLDER_ID"));
 
-  // Старую версию этого сайта — в корзину (её можно восстановить 30 дней).
+  // Старую версию этого сайта - в корзину (её можно восстановить 30 дней).
   [root.getFoldersByName(tabName), root.getFilesByName(tabName + ".zip")].forEach(function (it) {
     while (it.hasNext()) it.next().setTrashed(true);
   });
@@ -988,7 +988,7 @@ function makeSite(ss, tabName) {
   if (pubError) notes.unshift("Сайт не опубликован: " + pubError);
   var list = sitesSheet(ss);
   var vals = list.getDataRange().getDisplayValues();
-  // Новая строка — сразу под последней строкой с названием листа (пробел где-то ниже не должен уводить её вниз).
+  // Новая строка - сразу под последней строкой с названием листа (пробел где-то ниже не должен уводить её вниз).
   var last = 1;
   for (var k = 1; k < vals.length; k++) if (String(vals[k][0]).trim()) last = k + 1;
   var row = last + 1;
@@ -1001,7 +1001,7 @@ function makeSite(ss, tabName) {
   return out;
 }
 
-// Ссылки на листе «Сайты» — короткими словами-ссылками вместо длинных адресов (колонка → надпись).
+// Ссылки на листе «Сайты» - короткими словами-ссылками вместо длинных адресов (колонка → надпись).
 var SITES_LINKS = { 3: "Папка", 4: "ZIP", 7: "Фото", 8: "Открыть сайт", 9: "Netlify" };
 function linkify(sh, row) {
   Object.keys(SITES_LINKS).forEach(function (c) {
@@ -1020,7 +1020,7 @@ function sitesSheet(ss) {
   }
   // Заголовок пишем всегда: в новой версии скрипта могли добавиться колонки.
   sh.getRange(1, 1, 1, SITES_HEADER.length).setValues([SITES_HEADER]).setFontWeight("bold");
-  // Строки прежних версий (длинные адреса) тоже превращаем в короткие ссылки; колонки ссылок — узкие.
+  // Строки прежних версий (длинные адреса) тоже превращаем в короткие ссылки; колонки ссылок - узкие.
   for (var r = 2; r <= sh.getLastRow(); r++) linkify(sh, r);
   Object.keys(SITES_LINKS).forEach(function (c) { sh.setColumnWidth(+c, 110); });
   sh.setColumnWidth(5, 360);
@@ -1054,8 +1054,8 @@ function json(obj) {
 }
 
 // ---------- 5. Публикация на Netlify ----------
-// Ключ доступа (Personal access token) хранится в свойствах этого скрипта — их видит только владелец.
-// Каждому листу анкеты — свой сайт на Netlify (id в свойстве NETLIFY_SITE:<лист>); пересборка листа
+// Ключ доступа (Personal access token) хранится в свойствах этого скрипта - их видит только владелец.
+// Каждому листу анкеты - свой сайт на Netlify (id в свойстве NETLIFY_SITE:<лист>); пересборка листа
 // выкладывает новую версию на тот же адрес.
 
 var NETLIFY_API = "https://api.netlify.com/api/v1";
@@ -1069,17 +1069,17 @@ function connectNetlify() {
     '<p>Тогда каждый сайт сразу публикуется в интернете, ссылка появляется на листе «Сайты».</p>' +
     '<ol style="padding-left:20px">' +
     '<li>Откройте <a href="' + NETLIFY_TOKEN_PAGE + '" target="_blank" rel="noopener">страницу ключей Netlify</a> ' +
-    '→ «New access token», название «QPortall», срок — «No expiration» → «Generate token».</li>' +
+    '→ «New access token», название «QPortall», срок - «No expiration» → «Generate token».</li>' +
     '<li>Скопируйте ключ и вставьте сюда.</li></ol>' +
     '<input id="t" style="width:100%;padding:6px;font:14px monospace" placeholder="nfp_..." autocomplete="off">' +
-    '<p style="color:#555">' + (p.getProperty("NETLIFY_TOKEN") ? "Сейчас подключено. Пустое поле и «Сохранить» — отключить публикацию." :
-      "Ключ даёт доступ к вашему аккаунту Netlify — никому его не пересылайте.") + '</p>' +
+    '<p style="color:#555">' + (p.getProperty("NETLIFY_TOKEN") ? "Сейчас подключено. Пустое поле и «Сохранить» - отключить публикацию." :
+      "Ключ даёт доступ к вашему аккаунту Netlify - никому его не пересылайте.") + '</p>' +
     '<button id="b" style="padding:6px 16px">Сохранить</button> <span id="m"></span>' +
     '<script>document.getElementById("b").onclick=function(){var m=document.getElementById("m");m.textContent="Проверяю…";' +
     'google.script.run.withSuccessHandler(function(r){m.innerHTML=r;}).withFailureHandler(function(e){m.textContent=e.message;})' +
     '.saveNetlifyToken(document.getElementById("t").value);};</script></div>')
     .setWidth(560).setHeight(380);
-  SpreadsheetApp.getUi().showModalDialog(html, "QPortall — подключить Netlify");
+  SpreadsheetApp.getUi().showModalDialog(html, "QPortall - подключить Netlify");
 }
 
 // Вызывается из окна connectNetlify. Возвращает HTML-строку для окна.
@@ -1106,7 +1106,7 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
 }
 
-// Запрос к API Netlify. body: объект (JSON) или Blob (ZIP). Ошибка — с понятным текстом и полем status.
+// Запрос к API Netlify. body: объект (JSON) или Blob (ZIP). Ошибка - с понятным текстом и полем status.
 function netlify(method, path, body, token) {
   var opt = { method: method, muteHttpExceptions: true,
     headers: { Authorization: "Bearer " + (token || PropertiesService.getScriptProperties().getProperty("NETLIFY_TOKEN")) } };
@@ -1138,7 +1138,7 @@ function createNetlifySite(tabName) {
   for (var i = 0; i < 4; i++) {
     try { return netlify("post", "/sites", { name: name, created_via: "qpage" }); }
     catch (e) {
-      // Имя уже занято (чужим или своим сайтом) — добавляем короткий хвост.
+      // Имя уже занято (чужим или своим сайтом) - добавляем короткий хвост.
       if (e.status !== 422) throw e;
       name = netlifyName(tabName).slice(0, 50) + "-" + Utilities.getUuid().replace(/-/g, "").slice(0, 5);
     }
@@ -1146,7 +1146,7 @@ function createNetlifySite(tabName) {
   throw new Error("не удалось подобрать свободное имя сайта");
 }
 
-// Отпечаток содержимого сайта (без меток ?v=, они новые при каждой сборке): одинаковый — сайт не менялся.
+// Отпечаток содержимого сайта (без меток ?v=, они новые при каждой сборке): одинаковый - сайт не менялся.
 function siteFingerprint(files, media) {
   var parts = Object.keys(files).sort().map(function (k) { return k + "\n" + String(files[k]).replace(/\?v=[0-9a-z]+/g, ""); });
   mediaFiles(media).forEach(function (m) {
@@ -1163,7 +1163,7 @@ function netlifySite(tabName) {
   var site = null;
   if (props.getProperty(key)) {
     try { site = netlify("get", "/sites/" + props.getProperty(key)); }
-    catch (e) { if (e.status !== 404) throw e; } // сайт удалили в Netlify — создадим заново
+    catch (e) { if (e.status !== 404) throw e; } // сайт удалили в Netlify - создадим заново
   }
   if (!site) {
     site = createNetlifySite(tabName);
@@ -1180,9 +1180,9 @@ function publishToNetlify(tabName, site, zipBlob, wantForm, notifyEmail, fingerp
   var url0 = site.ssl_url || site.url, admin0 = site.admin_url || ("https://app.netlify.com/projects/" + site.name);
   if (fingerprint && props.getProperty(hashKey) === fingerprint) {
     return { url: url0, adminUrl: admin0, formOk: true,
-      notes: ["Netlify: сайт не изменился — заново не выкладывали (каждая выкладка стоит 15 кредитов Netlify)"] };
+      notes: ["Netlify: сайт не изменился - заново не выкладывали (каждая выкладка стоит 15 кредитов Netlify)"] };
   }
-  // Форма заявки: новые сайты Netlify по умолчанию не ищут формы — включаем.
+  // Форма заявки: новые сайты Netlify по умолчанию не ищут формы - включаем.
   if (wantForm && !(site.processing_settings && site.processing_settings.ignore_html_forms === false)) {
     try { netlify("patch", "/sites/" + site.id, { processing_settings: { ignore_html_forms: false } }); }
     catch (e) { Logger.log("forms: " + e.message); }
@@ -1223,7 +1223,7 @@ function publishToNetlify(tabName, site, zipBlob, wantForm, notifyEmail, fingerp
     try { syncEmailHook(site.id, notifyEmail); }
     catch (e) {
       Logger.log("hooks: " + e.message);
-      notes.push("Netlify: не удалось настроить письма о заявках" + (notifyEmail ? " на " + notifyEmail : "") + " — " + e.message +
+      notes.push("Netlify: не удалось настроить письма о заявках" + (notifyEmail ? " на " + notifyEmail : "") + " - " + e.message +
         ". Можно вручную: " + adminUrl + " → Project configuration → Notifications → Emails and webhooks → Form submission notifications.");
     }
   }

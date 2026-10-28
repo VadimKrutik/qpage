@@ -1,5 +1,5 @@
 /*
- * QPage — логика страницы: языки, наполнение блоков, форма, карта, QR-код.
+ * QPage - логика страницы: языки, наполнение блоков, форма, карта, QR-код.
  * Данные берутся из window.QPAGE (assets/js/content.js).
  */
 (function () {
@@ -55,7 +55,7 @@
     try { return window.localStorage.getItem(STORAGE_KEY); } catch (e) { return null; }
   }
   function storageSet(v) {
-    try { window.localStorage.setItem(STORAGE_KEY, v); } catch (e) { /* хранилище недоступно — не страшно */ }
+    try { window.localStorage.setItem(STORAGE_KEY, v); } catch (e) { /* хранилище недоступно - не страшно */ }
   }
 
   function formatPrice(value) {
@@ -144,8 +144,8 @@
   }
 
   function renderHero() {
-    // Первый экран одинаковый во всех версиях (как core.js): в цветной заливке по центру — фото владельца
-    // (лицо вызывает доверие), название, преимущества и предложение; ниже — главное фото крупно.
+    // Первый экран одинаковый во всех версиях (как core.js): в цветной заливке по центру - фото владельца
+    // (лицо вызывает доверие), название, преимущества и предложение; ниже - главное фото крупно.
     var hero = $(".hero"), ph = SITE.gallery || [], bigSrc = SITE.mainPhoto || (ph[0] || {}).src;
     var big = $(".hero-photo"), photo = $(".hero-portrait"), box = $(".hero-banner .container");
     if (bigSrc && !big) {
@@ -224,7 +224,7 @@
     });
   }
 
-  // Прайс: строки «название — цена»; строка без цены с group: true — заголовок группы.
+  // Прайс: строки «название - цена»; строка без цены с group: true - заголовок группы.
   function renderPricelist() {
     var body = $("#price-rows");
     body.textContent = "";
@@ -263,7 +263,7 @@
     docs.textContent = "";
     ((SITE.credentials || {}).docs || []).forEach(function (src, i) {
       docs.appendChild(el("li", {}, [el("a", { href: src, target: "_blank", rel: "noopener" }, [
-        el("img", { src: src, alt: t.credentials.title + " — " + (i + 1), loading: "lazy", width: "240", height: "320" })
+        el("img", { src: src, alt: t.credentials.title + " - " + (i + 1), loading: "lazy", width: "240", height: "320" })
       ])]));
     });
     docs.hidden = !docs.children.length;
@@ -281,7 +281,7 @@
     var list = $("#reviews-list");
     list.textContent = "";
     if (!t.reviews) return;
-    // Свёрнутый отзыв: имя и начало текста; весь текст — по нажатию (как «Вопросы и ответы»).
+    // Свёрнутый отзыв: имя и начало текста; весь текст - по нажатию (как «Вопросы и ответы»).
     // Имя может быть на другом языке (кириллица на иврите): <bdi>, чтобы точка не убегала.
     (t.reviews.items || []).forEach(function (r) {
       list.appendChild(el("details", { "class": "review" }, [
@@ -294,7 +294,7 @@
     });
   }
 
-  // Видео не с YouTube: вместо встраивания — кнопка-ссылка на него.
+  // Видео не с YouTube: вместо встраивания - кнопка-ссылка на него.
   function renderVideoLink() {
     var v = SITE.video || {};
     var mode = v.youtube ? "youtube" : "link";
@@ -388,7 +388,7 @@
       $("#map-waze").setAttribute("href",
         "https://waze.com/ul?ll=" + m.lat + "," + m.lon + "&navigate=yes");
     } else {
-      // Координат нет — ищем по адресу, а встроенную карту не показываем.
+      // Координат нет - ищем по адресу, а встроенную карту не показываем.
       var q = encodeURIComponent(t.map.address);
       $("#map-google").setAttribute("href", "https://www.google.com/maps/search/?api=1&query=" + q);
       $("#map-waze").setAttribute("href", "https://waze.com/ul?q=" + q + "&navigate=yes");
@@ -433,11 +433,11 @@
 
   function renderFooter() {
     $("#footer-rights").textContent = fill(t.footer.rights, { year: new Date().getFullYear() });
-    // Официальное название и номер бизнеса (ע.מ. / ח.פ.) — как есть, на любом языке сайта.
+    // Официальное название и номер бизнеса (ע.מ. / ח.פ.) - как есть, на любом языке сайта.
     $("#footer-legal").hidden = !SITE.legal;
     $("#footer-legal-text").textContent = SITE.legal || "";
     var made = $("#made-with"), url = (SITE.madeBy || {}).url;
-    // «Сайт сделан на QPortall»: слово QPortall — логотипом (синяя Q, шрифт с засечками).
+    // «Сайт сделан на QPortall»: слово QPortall - логотипом (синяя Q, шрифт с засечками).
     var mt = $("#made-with-text");
     mt.textContent = "";
     String(t.footer.madeWith || "").split("QPortall").forEach(function (part, i) {
@@ -478,13 +478,13 @@
     link.dataset.blob = blobUrl;
     link.setAttribute("href", blobUrl);
     link.setAttribute("download", "qr-code.svg"); // в HTML без href атрибут download недопустим
-    // «Поделиться» — только у настоящего адреса (не у файла на диске).
+    // «Поделиться» - только у настоящего адреса (не у файла на диске).
     $("#qr-share").hidden = !real;
     $("#qr-share").dataset.url = withLang;
     $("#qr-share-status").textContent = "";
   }
 
-  // Меню «Поделиться» телефона; где его нет — копируем ссылку и говорим об этом.
+  // Меню «Поделиться» телефона; где его нет - копируем ссылку и говорим об этом.
   function shareSite() {
     var url = $("#qr-share").dataset.url;
     var status = $("#qr-share-status");
@@ -495,8 +495,8 @@
       else status.textContent = url;
     };
     if (navigator.share && !sharing) {
-      // Телефон иногда «зависает» на прошлом окне «Поделиться» и отказывает молча —
-      // тогда копируем ссылку. Отмена самим посетителем (AbortError) — не ошибка.
+      // Телефон иногда «зависает» на прошлом окне «Поделиться» и отказывает молча -
+      // тогда копируем ссылку. Отмена самим посетителем (AbortError) - не ошибка.
       sharing = true;
       var timer = setTimeout(function () { sharing = false; }, 15000);
       navigator.share({ title: document.title, url: url })
@@ -518,10 +518,10 @@
       var name = n.getAttribute("data-block");
       n.hidden = OPT_IN.indexOf(name) !== -1 ? blocks[name] !== true : blocks[name] === false;
     });
-    // Сообщение «форма в демо-режиме» — только если форма вообще есть на сайте.
+    // Сообщение «форма в демо-режиме» - только если форма вообще есть на сайте.
     var demoForm = SITE.blocks.form && SITE.form.mode === "demo";
     $all("[data-form-demo]").forEach(function (n) { n.hidden = !demoForm; });
-    // Без почты заявка уходит в WhatsApp — так и подписываем кнопку.
+    // Без почты заявка уходит в WhatsApp - так и подписываем кнопку.
     if (waOnly()) $("#f-submit").setAttribute("data-i18n", "form.submitWa");
     $("#demo-notice").hidden = !SITE.demoNotice;
     $("#map-box").hidden = !hasCoords();
@@ -538,7 +538,7 @@
 
   // ---------- Версия сайта ----------
   // Порядок блоков и меню, чередование фона, фото на первом экране «Витрины».
-  // Генератор делает то же заранее (core.js, arrange), здесь — для шаблона и на всякий случай.
+  // Генератор делает то же заранее (core.js, arrange), здесь - для шаблона и на всякий случай.
   function applyDesign() {
     var design = SITE.design || "classic", order = SITE.order || [];
     document.documentElement.setAttribute("data-design", design);
@@ -568,7 +568,7 @@
 
   // Логотип бывает квадратным значком, а бывает надписью (широкий). Широкий показываем
   // во всю ширину, без квадратной рамки; название рядом с ним в шапке не повторяем;
-  // значок вкладки — первая буква названия, иначе надпись там не разобрать.
+  // значок вкладки - первая буква названия, иначе надпись там не разобрать.
   function fitLogo(img) {
     var wide = img.naturalWidth / Math.max(1, img.naturalHeight) >= 1.6;
     img.classList.toggle("is-wide", wide);
@@ -736,7 +736,7 @@
       $("#error-summary").focus();
       return;
     }
-    // Бот заполнил скрытое поле — молча ничего не делаем.
+    // Бот заполнил скрытое поле - молча ничего не делаем.
     if (form.elements.website.value) return;
 
     var mode = SITE.form.mode;
@@ -756,7 +756,7 @@
           body: new URLSearchParams(new FormData(form)).toString() }).catch(function () {});
       }
       showResult("resultWa", "ok");
-      showWa(data, false); // если окно не открылось — кнопка рядом
+      showWa(data, false); // если окно не открылось - кнопка рядом
       form.reset();
       touched = false;
       return;

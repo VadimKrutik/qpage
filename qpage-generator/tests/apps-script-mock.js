@@ -322,7 +322,7 @@ if (nMedia) {
   ok("главное фото: крупно под кнопками; фото владельца — в цветной заливке", content.includes('"mainPhoto": "assets/img/main.jpg"') && zip.blob.entries.includes("assets/img/main.jpg") &&
     /<img class="hero-photo" src="assets\/img\/main\.jpg"/.test(html) && /<div class="hero-banner">\s*<div class="container">\s*<img class="hero-portrait"/.test(html));
   ok("фото документов: в блоке лицензий маленькими картинками со ссылкой на полный размер", content.includes('"docs": [\n') && zip.blob.entries.includes("assets/img/doc-1.jpg") &&
-    /<ul class="doc-photos" id="credentials-docs"><li><a href="assets\/img\/doc-1\.jpg" target="_blank" rel="noopener"><img src="assets\/img\/doc-1\.jpg" alt="[^"]+ — 1"/.test(html), (html.match(/<ul class="doc-photos"[^]{0,300}/) || [""])[0]);
+    /<ul class="doc-photos" id="credentials-docs"><li><a href="assets\/img\/doc-1\.jpg" target="_blank" rel="noopener"><img src="assets\/img\/doc-1\.jpg" alt="[^"]+ - 1"/.test(html), (html.match(/<ul class="doc-photos"[^]{0,300}/) || [""])[0]);
   ok("фото: значок вкладки — логотип клиента", html.includes('<link rel="icon" href="assets/img/logo.png" type="image/png">'));
   const row = ss.getSheetByName("Сайты").cells[1];
   ok("фото: маленькое фото — замечание с размером (640×420 меньше 1200 у главного)", row[4].includes("Главное фото низкого качества. Замените: main.jpg"), row[4]);

@@ -10,7 +10,7 @@
   <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/style.css">
   <!-- Выбор языка до показа страницы (бывший lang-early.js). Код встроен, чтобы не ждать отдельный файл;
-       в _headers он разрешён по хэшу sha256 — после любой правки кода хэш нужно пересчитать (тесты это поймают). -->
+       в _headers он разрешён по хэшу sha256 - после любой правки кода хэш нужно пересчитать (тесты это поймают). -->
   <script>(function () {
   "use strict";
   try {
@@ -34,15 +34,15 @@
       }
     }
     // Прячем, только если меняется направление письма (иврит ↔ русский/английский): тогда
-    // отражается вся страница. Русский ↔ английский — просто замена текста, страницу не прячем,
+    // отражается вся страница. Русский ↔ английский - просто замена текста, страницу не прячем,
     // иначе главный текст появляется позже (Google считает это медленной загрузкой, LCP).
     var rtl = function (l) { return l === "he" || l === "ar"; };
     if (pick && pick !== main && rtl(pick) !== rtl(main)) {
       html.classList.add("lang-wait");
-      // Если скрипт сайта почему-то не сработал — всё равно показать страницу.
+      // Если скрипт сайта почему-то не сработал - всё равно показать страницу.
       setTimeout(function () { html.classList.remove("lang-wait"); }, 3000);
     }
-  } catch (e) { /* старый браузер — страница просто откроется на основном языке */ }
+  } catch (e) { /* старый браузер - страница просто откроется на основном языке */ }
 })();</script>
 </head>
 <body>
@@ -107,13 +107,13 @@
   <main id="main" tabindex="-1">
     <noscript><p class="container noscript" data-i18n="ui.noscript">Для переключения языка и работы формы включите JavaScript.</p></noscript>
 
-    <!-- Блоки 1–2: одинаковые во всех версиях. Сверху — цветная заливка: фото владельца слева (если есть),
-         по центру три строки — вид деятельности, название, преимущества. Ниже — «Где работаем» и кнопки,
-         под ними главное предложение, ещё ниже — главное фото крупно. -->
+    <!-- Блоки 1-2: одинаковые во всех версиях. Сверху - цветная заливка: фото владельца слева (если есть),
+         по центру три строки - вид деятельности, название, преимущества. Ниже - «Где работаем» и кнопки,
+         под ними главное предложение, ещё ниже - главное фото крупно. -->
     <section class="hero" id="top" aria-labelledby="hero-title">
       <div class="hero-banner">
         <div class="container">
-          <!-- Вид деятельности — в заголовке вместе с названием: так поисковик видит, чем занимается бизнес -->
+          <!-- Вид деятельности - в заголовке вместе с названием: так поисковик видит, чем занимается бизнес -->
           <h1 id="hero-title"><span class="hero-kind" data-i18n="hero.kind"></span> <span class="hero-name" data-i18n="hero.name"></span></h1>
           <ul class="hero-facts" id="hero-facts"></ul>
         </div>
@@ -122,7 +122,7 @@
         <!-- На телефоне преимущества стоят здесь, под цветной заливкой: в заливке только фото и название -->
         <ul class="hero-facts hero-facts-below" id="hero-facts-below"></ul>
         <div class="hero-more">
-          <!-- Районы выезда — сразу на первом экране, чтобы клиент видел, приедут ли к нему -->
+          <!-- Районы выезда - сразу на первом экране, чтобы клиент видел, приедут ли к нему -->
           <p class="hero-areas" id="hero-areas" hidden>
             <span><span data-i18n="contacts.areas"></span> <strong id="hero-areas-text"></strong></span>
           </p>
@@ -160,7 +160,7 @@
       <div class="container narrow">
         <h2 id="credentials-title" data-i18n="credentials.title"></h2>
         <ul class="check-list" id="credentials-list"></ul>
-        <!-- Фото документов: маленькие картинки, по нажатию — во весь размер -->
+        <!-- Фото документов: маленькие картинки, по нажатию - во весь размер -->
         <ul class="doc-photos" id="credentials-docs"></ul>
         <a class="btn btn-secondary" id="credentials-link" target="_blank" rel="noopener noreferrer">
           <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-doc"/></svg>
@@ -221,7 +221,7 @@
               <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-play"/></svg>
               <span data-i18n="video.show"></span>
             </button>
-            <!-- Видео не с YouTube (Instagram, TikTok…) — ссылка, открывается на том сайте -->
+            <!-- Видео не с YouTube (Instagram, TikTok…) - ссылка, открывается на том сайте -->
             <a class="btn btn-primary" id="video-link" data-video-mode="link" target="_blank" rel="noopener" hidden>
               <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-play"/></svg>
               <span data-i18n="video.show"></span>
@@ -235,7 +235,7 @@
     <section class="section section-soft" id="reviews" data-block="reviews" aria-labelledby="reviews-title">
       <div class="container">
         <h2 id="reviews-title" data-i18n="reviews.title"></h2>
-        <!-- Отзывы свёрнуты: видны имя и начало, весь текст — по нажатию -->
+        <!-- Отзывы свёрнуты: видны имя и начало, весь текст - по нажатию -->
         <div class="accordion reviews" id="reviews-list"></div>
       </div>
     </section>
@@ -437,7 +437,7 @@
       <p><a href="#privacy" data-block="privacy" data-i18n="privacy.title"></a></p>
       <p><a href="#accessibility" data-block="accessibility" data-i18n="accessibility.title"></a></p>
     </div>
-    <!-- Подпись QPage отдельной строкой внизу: со ссылкой на заказ сайта (site.madeBy.url), без ссылки — просто текст -->
+    <!-- Подпись QPage отдельной строкой внизу: со ссылкой на заказ сайта (site.madeBy.url), без ссылки - просто текст -->
     <div class="container footer-made">
       <p class="made-with">
         <a id="made-with" target="_blank" rel="noopener">

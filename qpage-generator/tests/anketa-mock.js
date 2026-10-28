@@ -251,7 +251,7 @@ const answers0 = answers;
   ctx.retryAnketas();
   uiAvailable = false;
   ok("«Сайты»: новая строка сразу под последней, а не под пробелом внизу", sites.cells.findIndex((r) => r[0] === "second") === namedRows, sites.cells.findIndex((r) => r[0] === "second") + " / " + namedRows);
-  ok("«собрать ещё раз»: собрано, лист second", /^готово/.test(row4()[5]) && row4()[1] === "second" && alerts[0].includes("собрано анкет — 1"), row4()[5] + " " + alerts[0]);
+  ok("«собрать ещё раз»: собрано, лист second", /^готово/.test(row4()[5]) && row4()[1] === "second" && alerts[0].includes("собрано анкет - 1"), row4()[5] + " " + alerts[0]);
 
   // --- Google Форма работает как раньше ---
   const n0 = ss.sheets.length;

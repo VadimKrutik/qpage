@@ -1,4 +1,4 @@
-/* QPage — стили. Цвета меняются в content.js (site.theme) или здесь, в :root. */
+/* QPage - стили. Цвета меняются в content.js (site.theme) или здесь, в :root. */
 
 :root {
   --accent: #0b6e69;
@@ -75,7 +75,7 @@ a:hover { color: var(--accent); }
 
 .container { width: 100%; max-width: 1120px; margin-inline: auto; padding-inline: 16px; }
 @media (min-width: 600px) { .container { padding-inline: 24px; } }
-/* Все блоки (прайс, форма, видео, вопросы) — от левой до правой линии сетки.
+/* Все блоки (прайс, форма, видео, вопросы) - от левой до правой линии сетки.
    Ограничена только длина строки обычного текста, чтобы его было удобно читать. */
 .narrow p:not(.demo-box) { max-width: 780px; }
 
@@ -112,7 +112,7 @@ a:hover { color: var(--accent); }
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
-/* Шапка в три колонки: название | языки | меню. Языки всегда ровно посередине —
+/* Шапка в три колонки: название | языки | меню. Языки всегда ровно посередине -
    при переключении на иврит они не перепрыгивают из угла в угол. */
 .header-inner {
   display: grid;
@@ -189,12 +189,12 @@ a:hover { color: var(--accent); }
 }
 @media (min-width: 900px) {
   .menu-toggle { display: none; }
-  /* На компьютере меню — второй строкой шапки (в одну строку с языками оно не помещается). */
+  /* На компьютере меню - второй строкой шапки (в одну строку с языками оно не помещается). */
   html { scroll-padding-top: 120px; }
   .header-inner { grid-template-columns: auto 1fr; padding-block: 8px 4px; row-gap: 4px; }
-  /* Название с логотипом — по центру по высоте обоих рядов (языки и меню). */
+  /* Название с логотипом - по центру по высоте обоих рядов (языки и меню). */
   .brand { grid-row: 1 / 3; align-self: center; }
-  /* Языки и меню прижаты к правой линии сетки — той же, где кончаются кнопки, фото и блоки. */
+  /* Языки и меню прижаты к правой линии сетки - той же, где кончаются кнопки, фото и блоки. */
   .site-nav { grid-column: 2; grid-row: 2; justify-self: end; }
   .site-nav ul { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
   .site-nav a { padding: 6px 12px; }
@@ -262,9 +262,9 @@ a:hover { color: var(--accent); }
 
 /* ---------- Первый экран ---------- */
 
-/* Одинаковый во всех версиях. Сверху — цветная заливка: фото владельца слева, по центру три строки
-   (вид деятельности, название, преимущества). Ниже — «Где работаем» слева и кнопки справа, под ними главное
-   предложение, ещё ниже — главное фото крупно. */
+/* Одинаковый во всех версиях. Сверху - цветная заливка: фото владельца слева, по центру три строки
+   (вид деятельности, название, преимущества). Ниже - «Где работаем» слева и кнопки справа, под ними главное
+   предложение, ещё ниже - главное фото крупно. */
 .hero { padding: 0 0 36px; background: var(--bg); }
 @media (min-width: 700px) { .hero { padding-bottom: 56px; } }
 .hero-banner {
@@ -275,8 +275,8 @@ a:hover { color: var(--accent); }
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   color: #fff;
 }
-/* Три колонки: фото — у левого края, текст — ровно по центру блока (третья колонка уравновешивает первую).
-   Крайние колонки — по размеру фото: длинное название не сжимает фото в овал. */
+/* Три колонки: фото - у левого края, текст - ровно по центру блока (третья колонка уравновешивает первую).
+   Крайние колонки - по размеру фото: длинное название не сжимает фото в овал. */
 .hero-banner > .container {
   --pw: 120px;
   width: 100%;
@@ -310,7 +310,7 @@ a:hover { color: var(--accent); }
   opacity: 0.9;
 }
 .hero h1 { font-size: clamp(2rem, 1.5rem + 2.5vw, 3.25rem); margin: 0 0 0.3em; color: #fff; text-wrap: balance; }
-/* Длинное название (больше 30 знаков) — мельче, чтобы не занимало три строки. */
+/* Длинное название (больше 30 знаков) - мельче, чтобы не занимало три строки. */
 .hero.long-name h1 { font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.4rem); }
 .hero-facts {
   list-style: none;
@@ -322,17 +322,17 @@ a:hover { color: var(--accent); }
   gap: 8px 20px;
 }
 .hero-facts li { display: flex; align-items: center; gap: 6px; font-weight: 500; }
-/* Копия преимуществ под заливкой — только на телефоне (в заливке там лишь фото и название). */
+/* Копия преимуществ под заливкой - только на телефоне (в заливке там лишь фото и название). */
 .hero-facts-below { display: none; }
 .hero-facts .icon { color: #fff; }
-/* «Где работаем» — у начала строки, кнопки — у конца; на узком экране кнопки переносятся вниз. */
+/* «Где работаем» - у начала строки, кнопки - у конца; на узком экране кнопки переносятся вниз. */
 .hero-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; padding-top: 24px; }
 .hero-more .hero-areas { margin: 0; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .hero-tagline { margin: 24px 0 0; font-size: 1.15rem; color: var(--text); }
-/* Главное фото — крупно, во всю ширину страницы (края совпадают с остальными блоками), не выше экрана.
+/* Главное фото - крупно, во всю ширину страницы (края совпадают с остальными блоками), не выше экрана.
    Рамка постоянной формы (без сдвига при загрузке); фото внутри целиком, не обрезается.
-   Если фото другой формы (например вертикальное с телефона), по бокам — та же картинка, размытая. */
+   Если фото другой формы (например вертикальное с телефона), по бокам - та же картинка, размытая. */
 .hero-photo-box {
   position: relative;
   aspect-ratio: 16 / 9;
@@ -359,7 +359,7 @@ a:hover { color: var(--accent); }
   height: 100%;
   object-fit: contain;
 }
-/* Телефон: фото владельца слева, три строки — справа от него, по центру оставшегося места. */
+/* Телефон: фото владельца слева, три строки - справа от него, по центру оставшегося места. */
 @media (max-width: 699px) {
   .hero-banner > .container { --pw: 80px; grid-template-columns: var(--pw) minmax(0, 1fr); column-gap: 16px; }
   .has-portrait .hero-banner h1,
@@ -368,7 +368,7 @@ a:hover { color: var(--accent); }
   .hero:not(.has-portrait) .hero-banner h1,
   .hero:not(.has-portrait) .hero-banner .hero-facts { grid-column: 1; }
   .hero-portrait { border-width: 3px; }
-  /* Две кнопки под «Где работаем» — одинаковой ширины, во всю строку. */
+  /* Две кнопки под «Где работаем» - одинаковой ширины, во всю строку. */
   .hero-actions { width: 100%; }
   .hero-actions .btn { flex: 1 1 0; }
   .hero h1 { font-size: 1.9rem; }
@@ -404,7 +404,7 @@ a:hover { color: var(--accent); }
   padding: 0;
   display: grid;
   gap: 16px;
-  /* auto-fit: 2–3 карточки растягиваются на всю ширину, а не жмутся к одному краю. */
+  /* auto-fit: 2-3 карточки растягиваются на всю ширину, а не жмутся к одному краю. */
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
 }
 .card {
@@ -427,7 +427,7 @@ a:hover { color: var(--accent); }
 }
 .gallery figure { margin: 0; position: relative; }
 .gallery img {
-  /* Все рамки одного размера (ровная сетка), фото внутри — целиком, без обрезки;
+  /* Все рамки одного размера (ровная сетка), фото внутри - целиком, без обрезки;
      свободные края рамки залиты спокойным фоном. */
   display: block;
   width: 100%;
@@ -439,7 +439,7 @@ a:hover { color: var(--accent); }
   border: 1px solid var(--border);
 }
 .gallery figcaption {
-  /* Название — поверх нижнего края фото на затемнении. Плитки одной высоты, мозаика не разъезжается. */
+  /* Название - поверх нижнего края фото на затемнении. Плитки одной высоты, мозаика не разъезжается. */
   position: absolute;
   inset: auto 0 0 0;
   padding: 32px 12px 10px;
@@ -451,7 +451,7 @@ a:hover { color: var(--accent); }
   line-height: 1.3;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
-/* Цена — белым ярлычком в верхнем углу фото, на всех плитках одинаково. */
+/* Цена - белым ярлычком в верхнем углу фото, на всех плитках одинаково. */
 .gallery .photo-price {
   position: absolute;
   top: 10px;
@@ -496,7 +496,7 @@ a:hover { color: var(--accent); }
 .dot { flex: none; width: 6px; height: 6px; margin-top: 0.62em; border-radius: 50%; background: var(--accent); }
 .dot-item { display: flex; gap: 12px; align-items: flex-start; }
 .card .dot, .price-table .dot { display: none; }
-/* На телефоне одиночные кнопки блоков — во всю ширину, от линии до линии. */
+/* На телефоне одиночные кнопки блоков - во всю ширину, от линии до линии. */
 @media (max-width: 599px) {
   main .section .btn:not(.video-box .btn, .map-box .btn) { width: 100%; }
 }
@@ -526,7 +526,7 @@ a:hover { color: var(--accent); }
   font-weight: 700;
 }
 
-/* Отзывы — свёрнутым списком: имя и начало текста в одну строку, весь отзыв — по нажатию. */
+/* Отзывы - свёрнутым списком: имя и начало текста в одну строку, весь отзыв - по нажатию. */
 .reviews .review summary { justify-content: flex-start; font-weight: 400; min-width: 0; }
 .review-name { flex: none; font-weight: 700; }
 .review-preview { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); }
@@ -542,7 +542,7 @@ a:hover { color: var(--accent); }
   background: var(--bg-soft);
   min-height: 200px;
 }
-/* До нажатия — тёмный кадр 16:9 с кнопкой, как у плеера: видно, что здесь видео. */
+/* До нажатия - тёмный кадр 16:9 с кнопкой, как у плеера: видно, что здесь видео. */
 .video-box:not(:has(iframe)) { background: #1c2124; border-color: #1c2124; }
 .video-box .map-placeholder { min-height: 220px; padding-block: 40px; background: none; color: #e8ecee; }
 .video-box iframe { width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; display: block; }
@@ -560,7 +560,7 @@ a:hover { color: var(--accent); }
   list-style: none;
 }
 .accordion summary::-webkit-details-marker { display: none; }
-/* Знак «+» в конце строки, у открытого вопроса — «−». */
+/* Знак «+» в конце строки, у открытого вопроса - «−». */
 .accordion summary::after { content: "+"; flex: none; font-size: 1.4rem; line-height: 1; color: var(--accent); }
 .accordion details[open] summary::after { content: "\2212"; }
 .accordion summary:hover { color: var(--accent-dark); }
@@ -733,16 +733,16 @@ a:hover { color: var(--accent); }
 .site-footer a { color: #fff; }
 .footer-inner { display: flex; flex-wrap: wrap; gap: 8px 32px; }
 .footer-inner p { margin: 0; }
-/* Подпись QPage — отдельной строкой под чертой, в начале строки */
+/* Подпись QPage - отдельной строкой под чертой, в начале строки */
 .footer-made { margin-top: 20px; }
-/* Линия — ровно по краям текста (не заходит на внутренние отступы). */
+/* Линия - ровно по краям текста (не заходит на внутренние отступы). */
 .footer-made p { padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.18); }
 .footer-made p { margin: 0; }
 .made-with a { display: inline-flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; text-decoration: none; color: inherit; }
 /* Логотип QPortall: слово с засечками, «Q» малиновая #FB01F2 (RGB 251-1-242), на тёмном подвале «Portall» белым. */
 .qpage-mark { font-family: Georgia, "Times New Roman", serif; font-size: 1.3em; line-height: 1; color: #fff; margin-inline: 2px; }
 .qpage-q { color: #fb01f2; }
-/* «Заказать сайт» — небольшая кнопка рядом с логотипом */
+/* «Заказать сайт» - небольшая кнопка рядом с логотипом */
 .made-with a[href] .made-with-order { display: inline-block; color: #fff; border: 1px solid #fff; border-radius: 8px; padding: 6px 12px; line-height: 1.2; font-weight: 600; }
 .made-with a[href]:hover .made-with-order { background: #fff; color: #142024; }
 
@@ -771,12 +771,12 @@ a:hover { color: var(--accent); }
   .site-header, .mobile-bar, .skip-link, .map-box, .video-box, #form { display: none; }
 }
 
-/* Пока скрипт переводит страницу на язык посетителя (скрипт выбора языка в <head> index.html) — не показываем её, чтобы не «прыгала». */
+/* Пока скрипт переводит страницу на язык посетителя (скрипт выбора языка в <head> index.html) - не показываем её, чтобы не «прыгала». */
 .lang-wait body { visibility: hidden; }
 
 /* =====================================================================
    Версии внешнего вида: html[data-design]. Всё одинаковое, кроме одного блока
-   сразу после первого экрана (порядок блоков — core.js, DESIGNS).
+   сразу после первого экрана (порядок блоков - core.js, DESIGNS).
    ===================================================================== */
 
 /* «Витрина»: мозаика фото (фото с первого экрана в ней не повторяются):
@@ -785,18 +785,18 @@ a:hover { color: var(--accent); }
 [data-design="showcase"] .gallery { grid-template-columns: 1fr 1fr; gap: 6px; }
 [data-design="showcase"] .gallery img { border: 0; border-radius: 0; background: none; object-fit: cover; }
 [data-design="showcase"] .gallery figcaption { border-radius: 0; }
-/* На узкой плитке телефона цена — над названием, чтобы название не сжималось в три строки. */
+/* На узкой плитке телефона цена - над названием, чтобы название не сжималось в три строки. */
 [data-design="showcase"] .gallery > li:nth-child(8n+5),
 [data-design="showcase"] .gallery > li:nth-child(8n+8) { grid-column: 1 / -1; }
 [data-design="showcase"] .gallery > li:nth-child(8n+5) img,
 [data-design="showcase"] .gallery > li:nth-child(8n+8) img { aspect-ratio: 16 / 9; }
-/* Последнее фото, оставшееся в ряду одно, — во всю ширину, без дыры рядом. */
+/* Последнее фото, оставшееся в ряду одно, - во всю ширину, без дыры рядом. */
 [data-design="showcase"] .gallery > li:last-child:is(:nth-child(8n+1), :nth-child(8n+3), :nth-child(8n+6)) { grid-column: 1 / -1; }
 [data-design="showcase"] .gallery > li:last-child:is(:nth-child(8n+1), :nth-child(8n+3), :nth-child(8n+6)) img { aspect-ratio: 16 / 9; }
 @media (min-width: 700px) { [data-design="showcase"] .gallery { gap: 10px; } }
 
-/* «Строгий»: «Ваш главный текст» — большой текст сразу после первого экрана. */
-/* «Ваш главный текст» — шириной с большое фото (просьба Vadim). */
+/* «Строгий»: «Ваш главный текст» - большой текст сразу после первого экрана. */
+/* «Ваш главный текст» - шириной с большое фото (просьба Vadim). */
 #story .narrow p { max-width: none; }
 .story-text p { font-size: clamp(1.1rem, 1rem + 0.4vw, 1.25rem); line-height: 1.8; margin: 0 0 1em; }
 .story-text p:last-child { margin-bottom: 0; }

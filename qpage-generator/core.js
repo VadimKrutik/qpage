@@ -1,5 +1,5 @@
 /*
- * QPage — ядро генератора: из листа анкеты делает файлы сайта.
+ * QPage - ядро генератора: из листа анкеты делает файлы сайта.
  * Один и тот же код работает в Node (generate.js) и в Google Apps Script (сборка build-gs.js).
  */
 var QPageCore = (function () {
@@ -74,7 +74,7 @@ var QPageCore = (function () {
     }
   };
 
-  // Главная кнопка: [текст кнопки, заголовок формы] на каждом языке. В листе — русское название варианта.
+  // Главная кнопка: [текст кнопки, заголовок формы] на каждом языке. В листе - русское название варианта.
   const CTA = {
     request: { label: "Оставить заявку", ru: ["Оставить заявку", "Оставить заявку"], he: ["השאירו פנייה", "השארת פנייה"], en: ["Send a request", "Send a request"] },
     order: { label: "Заказать", ru: ["Заказать", "Заказ"], he: ["להזמנה", "הזמנה"], en: ["Order", "Place an order"] },
@@ -86,40 +86,40 @@ var QPageCore = (function () {
   }
 
   // Версии внешнего вида. Ядро (блоки, тексты, форма, языки) общее; версия меняет оформление (style.css,
-  // html[data-design]) и порядок блоков. order — все блоки после первого экрана, сверху вниз.
-  // В анкете вариант пишется «Витрина — …», поэтому узнаём его по первому слову.
+  // html[data-design]) и порядок блоков. order - все блоки после первого экрана, сверху вниз.
+  // В анкете вариант пишется «Витрина - …», поэтому узнаём его по первому слову.
   // Сколько фото галереи занято первым экраном: без «Главного фото» крупно идёт 1-е фото работ.
   // Так же в app.js (renderHero, renderGallery).
   function heroUsed(main, n) { return main ? 0 : Math.min(1, n); }
 
-  // Главное предложение рядом с фото владельца — коротко (подсказка в анкете, предупреждение в «проверить»).
+  // Главное предложение рядом с фото владельца - коротко (подсказка в анкете, предупреждение в «проверить»).
   const TAGLINE_MAX = 400;
 
-  // Порядок блоков после первого экрана — одинаковый во всех версиях.
+  // Порядок блоков после первого экрана - одинаковый во всех версиях.
   // story («Ваш главный текст») виден только в «Строгом».
   const ORDER = ["story", "about", "credentials", "services", "pricelist", "gallery", "steps", "video", "reviews", "offers", "contacts", "map", "form", "qr", "accessibility", "privacy"];
   const DESIGNS = {
     classic: { label: "Классический вариант", old: "Классика", order: ORDER },
-    // Отличие только одно: сразу после первого экрана — мозаика фото работ (без того, что уже крупно вверху).
+    // Отличие только одно: сразу после первого экрана - мозаика фото работ (без того, что уже крупно вверху).
     showcase: { label: "Фото-витрина", old: "Витрина", order: ["story", "gallery"].concat(ORDER.filter((id) => id !== "gallery" && id !== "story")) },
-    // Отличие только одно: сразу после первого экрана — «Ваш главный текст».
+    // Отличие только одно: сразу после первого экрана - «Ваш главный текст».
     strict: { label: "Текстовый блок", old: "Строгий", order: ORDER }
   };
   function designKey(v) {
     v = String(v || "").trim().toLowerCase();
-    // old — как вариант назывался раньше («Витрина — …»): старые ответы продолжают работать.
+    // old - как вариант назывался раньше («Витрина - …»): старые ответы продолжают работать.
     return Object.keys(DESIGNS).find((k) => k === v || [DESIGNS[k].label, DESIGNS[k].old].some((x) => v.indexOf(x.toLowerCase()) === 0)) || "classic";
   }
 
-  // «Торт Наполеон — 120», «Маникюр: от 150 ₪» → { name, price }; без числа в конце — price: null.
+  // «Торт Наполеон - 120», «Маникюр: от 150 ₪» → { name, price }; без числа в конце - price: null.
   const PRICE_RE = /^(.*?)\s*[—–:-]\s*(?:от|from|החל מ־?|מ־)?\s*(?:₪\s*)?(\d[\d\s]*(?:[.,]\d+)?)\s*(?:₪|шек\.?|ש["״]ח|nis|ils)?\s*$/i;
   function splitPrice(line) {
     const m = String(line || "").match(PRICE_RE);
     if (!m || !m[1].trim()) return { name: String(line || "").trim(), price: null };
     return { name: m[1].trim(), price: parseFloat(m[2].replace(/\s/g, "").replace(",", ".")) };
   }
-  // Строка прайса: как splitPrice, но без числа «Доставка — бесплатно» (тире с пробелами) → priceText: "бесплатно".
-  // Только для прайса: в подписях к фото тире — часть текста.
+  // Строка прайса: как splitPrice, но без числа «Доставка - бесплатно» (тире с пробелами) → priceText: "бесплатно".
+  // Только для прайса: в подписях к фото тире - часть текста.
   function splitPriceLine(line) {
     const r = splitPrice(line);
     if (r.price != null) return r;
@@ -144,13 +144,13 @@ var QPageCore = (function () {
     return VIDEO_HOSTS[host] || host;
   }
 
-  // «Всё сделали за день — Анна К.» → { text, name }: имя после последнего тире с пробелами.
+  // «Всё сделали за день - Анна К.» → { text, name }: имя после последнего тире с пробелами.
   function splitReview(line) {
     const m = String(line || "").match(/^(.*\S)\s+[—–-]\s+([^—–]+?)\s*$/);
     return m && m[2].length <= 40 ? { text: m[1], name: m[2] } : { text: String(line || "").trim(), name: "" };
   }
 
-  // Часы работы из анкеты: дни галочками + «8-19» → «Вс–Чт 8:00–19:00, Пт 8:00–13:00» на каждом языке.
+  // Часы работы из анкеты: дни галочками + «8-19» → «Вс–Чт 8:00-19:00, Пт 8:00-13:00» на каждом языке.
   const DAY_NAMES = {
     ru: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
     he: ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"],
@@ -165,7 +165,7 @@ var QPageCore = (function () {
     });
     return out.sort((a, b) => a - b);
   }
-  // «8-19», «8:30 – 19», «08.00-13.00» → «8:00–19:00»; иначе null.
+  // «8-19», «8:30 - 19», «08.00-13.00» → «8:00-19:00»; иначе null.
   function normHours(s) {
     const m = String(s || "").trim().match(/^(\d{1,2})(?:[:.](\d{2}))?\s*[-–—]\s*(\d{1,2})(?:[:.](\d{2}))?$/);
     if (!m || +m[1] > 24 || +m[3] > 24) return null;
@@ -241,7 +241,7 @@ var QPageCore = (function () {
   function rgbToHex(c) { return "#" + c.map((x) => Math.round(x).toString(16).padStart(2, "0")).join(""); }
   function mix(a, b, t) { const x = hexToRgb(a), y = hexToRgb(b); return rgbToHex(x.map((v, i) => v + (y[i] - v) * t)); }
 
-  // media — файлы клиента, уже положенные в сайт: { logo: "assets/img/logo.png" | null, photos: ["assets/img/photo-1.jpg", ...] }
+  // media - файлы клиента, уже положенные в сайт: { logo: "assets/img/logo.png" | null, photos: ["assets/img/photo-1.jpg", ...] }
   function buildData(f, tpl, media) {
     media = media || { logo: null, photos: [] };
     const v = (k) => (f[k] ? f[k].value : "");
@@ -264,7 +264,7 @@ var QPageCore = (function () {
     const services = [];
     for (let i = 1; i <= MAX_SERVICES; i++) {
       if (!tx("service" + i + "Name", main)) continue;
-      // Цена — число («1000») или текст («Включено в стоимость»; переводы в колонках ru/he/en).
+      // Цена - число («1000») или текст («Включено в стоимость»; переводы в колонках ru/he/en).
       const price = parseFloat(String(v("service" + i + "Price")).replace(",", "."));
       services.push({ i, price: isFinite(price) ? price : null });
     }
@@ -274,43 +274,43 @@ var QPageCore = (function () {
     }
 
     const warnings = [];
-    // Прайс: строки основного языка задают цены и группы («Стрижки:»), остальные языки — только названия.
+    // Прайс: строки основного языка задают цены и группы («Стрижки:»), остальные языки - только названия.
     const priceLines = lines(tx("pricelist", main)).slice(0, MAX_LINES);
     // Заголовков разделов в прайсе нет (28.10 Vadim: «Сантехника:» в конце строки только путало клиентов).
     const priceRows = priceLines.map((l) => ({ price: splitPrice(l).price }));
     const priceLink = isUrl(v("priceLink")) ? v("priceLink").trim() : "";
-    if (String(tx("tagline", main) || v("tagline") || "").length > TAGLINE_MAX) warnings.push("главное предложение длиннее " + TAGLINE_MAX + " знаков — лучше сократить, большой текст — в «Ваш главный текст»");
-    if (v("priceLink") && !priceLink) warnings.push("ссылка на прайс не начинается с https:// — кнопки нет: " + v("priceLink"));
+    if (String(tx("tagline", main) || v("tagline") || "").length > TAGLINE_MAX) warnings.push("главное предложение длиннее " + TAGLINE_MAX + " знаков - лучше сократить, большой текст - в «Ваш главный текст»");
+    if (v("priceLink") && !priceLink) warnings.push("ссылка на прайс не начинается с https:// - кнопки нет: " + v("priceLink"));
     const licenseLink = isUrl(v("licenseLink")) ? v("licenseLink").trim() : "";
-    if (v("licenseLink") && !licenseLink) warnings.push("ссылка на документ не начинается с https:// — кнопки нет: " + v("licenseLink"));
+    if (v("licenseLink") && !licenseLink) warnings.push("ссылка на документ не начинается с https:// - кнопки нет: " + v("licenseLink"));
     const video = youtubeId(v("video"));
     const videoLink = !video && isUrl(v("video")) ? v("video").trim() : "";
-    if (v("video") && !video && !videoLink) warnings.push("видео: ссылка не начинается с https:// — блока нет: " + v("video"));
-    // Отзывы: новое поле reviews (по строке «текст — имя») или старые review1Text/review1Name.
+    if (v("video") && !video && !videoLink) warnings.push("видео: ссылка не начинается с https:// - блока нет: " + v("video"));
+    // Отзывы: новое поле reviews (по строке «текст - имя») или старые review1Text/review1Name.
     const reviewsOf = (l) => (f.reviews
       ? lines(tx("reviews", l)).slice(0, MAX_REVIEWS).map(splitReview)
       : Array.from({ length: MAX_REVIEWS }, (x, i) => i + 1).filter((i) => tx("review" + i + "Text", main))
         .map((i) => ({ text: tx("review" + i + "Text", l), name: v("review" + i + "Name") })));
     const nReviews = reviewsOf(main).length;
-    if (f.reviews && lines(tx("reviews", main)).length > MAX_REVIEWS) warnings.push("отзывов больше " + MAX_REVIEWS + " — на сайте первые " + MAX_REVIEWS);
+    if (f.reviews && lines(tx("reviews", main)).length > MAX_REVIEWS) warnings.push("отзывов больше " + MAX_REVIEWS + " - на сайте первые " + MAX_REVIEWS);
     const captionsMain = String(tx("captions", main) || "").split(/\r?\n/).map((x) => x.trim());
     const nCaptions = lines(tx("captions", main)).length;
     if (nCaptions > media.photos.length) {
-      warnings.push(media.photos.length ? "подписей к фото больше, чем фото (" + nCaptions + " подписей, " + media.photos.length + " фото) — лишние не показаны"
-        : "есть подписи к фото, но фото нет — подписи не показаны");
+      warnings.push(media.photos.length ? "подписей к фото больше, чем фото (" + nCaptions + " подписей, " + media.photos.length + " фото) - лишние не показаны"
+        : "есть подписи к фото, но фото нет - подписи не показаны");
     }
     const noPrice = lines(tx("pricelist", main)).filter((l) => splitPrice(l).price == null && !splitPriceLine(l).priceText);
-    if (noPrice.length) warnings.push("в прайсе строки без цены (цена пишется через тире: «Стрижка — 80»): " + noPrice.slice(0, 3).join(" | "));
+    if (noPrice.length) warnings.push("в прайсе строки без цены (цена пишется через тире: «Стрижка - 80»): " + noPrice.slice(0, 3).join(" | "));
     const hoursFromDays = !!(v("workDays") && normHours(v("workHours")));
-    if (v("workHours") && !normHours(v("workHours"))) warnings.push("часы работы не по образцу 8:00-19:00 — не показаны: " + v("workHours"));
-    if (v("fridayHours") && !normHours(v("fridayHours"))) warnings.push("часы в пятницу не по образцу 8:00-13:00 — не учтены: " + v("fridayHours"));
+    if (v("workHours") && !normHours(v("workHours"))) warnings.push("часы работы не по образцу 8:00-19:00 - не показаны: " + v("workHours"));
+    if (v("fridayHours") && !normHours(v("fridayHours"))) warnings.push("часы в пятницу не по образцу 8:00-13:00 - не учтены: " + v("fridayHours"));
     const cta = ctaKey(v("cta"));
     const design = designKey(v("design"));
 
     const accent = /^#[0-9a-f]{6}$/i.test(v("color")) ? v("color") : "#0b6e69";
     const formOn = extra.includes("form");
     const mapOn = extra.includes("map") && hasAddress;
-    if (formOn && !v("email") && !v("whatsapp")) warnings.push("форма заявки включена, но нет ни эл. почты, ни WhatsApp — заявки будут видны только в Netlify (Forms)");
+    if (formOn && !v("email") && !v("whatsapp")) warnings.push("форма заявки включена, но нет ни эл. почты, ни WhatsApp - заявки будут видны только в Netlify (Forms)");
 
     const site = {
       url: "",
@@ -358,7 +358,7 @@ var QPageCore = (function () {
       accessibilityDate: new Date().toISOString().slice(0, 10),
       legal: v("legal"),
       madeBy: { url: isUrl(v("madeByUrl")) ? v("madeByUrl").trim() : "" },
-      // Заявки: на почту (письмо от Netlify), без почты — в WhatsApp.
+      // Заявки: на почту (письмо от Netlify), без почты - в WhatsApp.
       form: { mode: formOn ? "netlify" : "demo", endpoint: "",
         channel: !formOn ? "" : v("email") ? "email" : v("whatsapp") ? "whatsapp" : "" }
     };
@@ -369,7 +369,7 @@ var QPageCore = (function () {
       const g = GENERIC[l];
       Object.keys(g).forEach((k) => { if (k.includes(".")) setPath(t, k, g[k]); });
       const name = tx("name", l);
-      t.meta.title = name + " — " + tx("kind", l);
+      t.meta.title = name + " - " + tx("kind", l);
       t.meta.description = metaDescription([tx("tagline", l)].concat(lines(tx("about", l)), [tx("areas", l), tx("address", l)]));
       t.hero = {
         name,
@@ -389,7 +389,7 @@ var QPageCore = (function () {
       t.gallery.items = media.photos.map((src, i) => ({
         // alt не повторяет подпись (иначе программа чтения прочтёт её дважды).
         alt: fill(g.photoAlt, { name, n: i + 1 }),
-        // Цена из подписи («Торт — 120») показывается отдельно, в подписи остаётся название.
+        // Цена из подписи («Торт - 120») показывается отдельно, в подписи остаётся название.
         caption: splitPrice(captions[i]).name
       }));
       const c = CTA[cta][l];
@@ -402,12 +402,12 @@ var QPageCore = (function () {
       t.reviews.items = reviewsOf(l);
       t.contacts.areasText = tx("areas", l) || "";
       t.offers.items = faq.map((i) => ({ title: tx("faq" + i + "Q", l), text: tx("faq" + i + "A", l) }));
-      // В иврите время «10:00–20:00» должно читаться слева направо.
+      // В иврите время «10:00-20:00» должно читаться слева направо.
       t.contacts.hoursText = hoursFromDays ? hoursText(v("workDays"), v("workHours"), v("fridayHours"), l) : l === "he"
         ? tx("hours", l).replace(/[\u2066\u2069]/g, "").replace(/\d[\d:.]*(\s*[–-]\s*\d[\d:.]*)?/g, (m) => ltr(m))
         : tx("hours", l);
       t.map.address = tx("address", l);
-      // Пункты о конфиденциальности: про форму и карту — только если они есть на сайте.
+      // Пункты о конфиденциальности: про форму и карту - только если они есть на сайте.
       const p = tpl.text[l].privacy.items;
       t.privacy.items = [p[0], p[1]]
         .concat(formOn ? [p[2]] : [])
@@ -425,7 +425,7 @@ var QPageCore = (function () {
     return { site, text, warnings, seo };
   }
 
-  // Описание для поисковиков: 120–155 знаков (короче — Google дописывает своё, длиннее — обрезает).
+  // Описание для поисковиков: 120-155 знаков (короче - Google дописывает своё, длиннее - обрезает).
   // Слоган, дальше пункты «О нас» и районы/адрес, пока не наберётся 120.
   function metaDescription(parts) {
     let out = "";
@@ -435,7 +435,7 @@ var QPageCore = (function () {
       const add = (out ? ". " : "") + p;
       if (out.length + add.length <= 155) { out += add; continue; }
       if (out.length >= 100) break;
-      // Не влезает целиком — обрезаем по слову.
+      // Не влезает целиком - обрезаем по слову.
       const cut = add.slice(0, 154 - out.length).replace(/\s+\S*$/, "");
       if (cut.replace(/^\. /, "").length > 15) out += cut + "…";
       break;
@@ -444,8 +444,8 @@ var QPageCore = (function () {
   }
 
   function contentJs(data, sourceName) {
-    return "/*\n * QPage — данные сайта. Создано генератором из анкеты «" + sourceName + "».\n" +
-      " * Если править руками — правьте здесь; при повторной генерации файл перезапишется.\n */\n" +
+    return "/*\n * QPage - данные сайта. Создано генератором из анкеты «" + sourceName + "».\n" +
+      " * Если править руками - правьте здесь; при повторной генерации файл перезапишется.\n */\n" +
       "window.QPAGE = " + JSON.stringify(data, null, 2) + ";\n";
   }
 
@@ -466,17 +466,17 @@ var QPageCore = (function () {
 
   // ---------- Страница в HTML без скрипта ----------
   // Скрипт сайта (app.js) наполняет страницу при открытии, а поисковики и проверки HTML читают сам файл.
-  // Поэтому тот же текст основного языка вписываем в index.html заранее — той же разметкой, что строит
+  // Поэтому тот же текст основного языка вписываем в index.html заранее - той же разметкой, что строит
   // app.js (иначе при открытии страница «прыгает»). Сайт без скрипта тоже читается целиком.
 
-  // Атрибут в открывающем теге: value — строка, true (без значения) или null (убрать).
+  // Атрибут в открывающем теге: value - строка, true (без значения) или null (убрать).
   function tagAttr(tag, name, value) {
     const re = new RegExp("\\s" + name + '(?:="[^"]*")?(?=[\\s/>])');
     const put = value == null || value === false ? "" : " " + name + (value === true ? "" : '="' + escXml(value) + '"');
     if (re.test(tag)) return tag.replace(re, put);
     return put ? tag.replace(/\s*(\/?>)$/, put + "$1") : tag;
   }
-  // Все открывающие теги, где есть attr (attr — кусок текста тега, например 'id="x"').
+  // Все открывающие теги, где есть attr (attr - кусок текста тега, например 'id="x"').
   function eachTag(html, test, fn) {
     return html.replace(/<[a-zA-Z][^<>]*>/g, (tag) => (typeof test === "string" ? tag.indexOf(test) !== -1 : test.test(tag)) ? fn(tag) : tag);
   }
@@ -494,7 +494,7 @@ var QPageCore = (function () {
   }
 
   // Версия сайта: порядок блоков (и пунктов меню), чередование фона, фото на первом экране «Витрины».
-  // То же делает app.js в браузере — здесь, чтобы страница сразу была в нужном виде.
+  // То же делает app.js в браузере - здесь, чтобы страница сразу была в нужном виде.
   function arrange(html, S) {
     const order = S.order || [];
     const SEC = /(?:<!--(?:(?!-->)[\s\S])*-->\s*)?<section\b[^<>]*\sid="(\w+)"[\s\S]*?<\/section>/g;
@@ -534,7 +534,7 @@ var QPageCore = (function () {
     const S = data.site, lang = S.defaultLang, t = data.text[lang], c = S.contacts, blocks = S.blocks;
     const e = escXml;
 
-    // Блоки: выключенные — скрыты (то же правило, что в app.js).
+    // Блоки: выключенные - скрыты (то же правило, что в app.js).
     const OPT_IN = ["credentials", "pricelist", "steps", "video", "reviews", "accessibility", "story"];
     html = eachTag(html, "data-block=", (tag) => {
       const b = tag.match(/data-block="(\w+)"/)[1];
@@ -570,7 +570,7 @@ var QPageCore = (function () {
     });
     html = inner(html, "menu-toggle-label", e(t.ui.menuOpen));
 
-    // Логотип: файл, а если известен размер — сразу правильная форма (широкий логотип-надпись).
+    // Логотип: файл, а если известен размер - сразу правильная форма (широкий логотип-надпись).
     const ls = media && media.logoSize;
     const wide = !!(ls && ls.w / Math.max(1, ls.h) >= 1.6);
     html = eachTag(html, "data-logo", (tag) => {
@@ -580,9 +580,9 @@ var QPageCore = (function () {
     });
     if (wide) html = html.replace(/<body( class="([^"]*)")?>/, (m, a, cls) => '<body class="' + (cls ? cls + " " : "") + 'logo-wide">');
 
-    // Первый экран (одинаковый во всех версиях): в цветной заливке — фото владельца слева, по центру три строки;
-    // под «Где работаем» и кнопками — предложение, под ним главное фото крупно
-    // (нет «Главного фото» — 1-е фото работ). См. app.js renderHero.
+    // Первый экран (одинаковый во всех версиях): в цветной заливке - фото владельца слева, по центру три строки;
+    // под «Где работаем» и кнопками - предложение, под ним главное фото крупно
+    // (нет «Главного фото» - 1-е фото работ). См. app.js renderHero.
     const ph = S.gallery || [], bigSrc = S.mainPhoto || (ph[0] || {}).src;
     if (bigSrc) {
       const alt = S.mainPhoto ? t.hero.name : t.gallery.items[0].alt;
@@ -596,7 +596,7 @@ var QPageCore = (function () {
     }
     // Класс сразу в HTML: раскладка «фото слева, текст справа» видна до скрипта, без сдвига при загрузке.
     if (S.portrait) html = eachTag(html, 'id="top"', (tag) => tag.replace(/class="([^"]*)"/, (m, c) => 'class="' + c + ' has-portrait"'));
-    // Длинное название — мельче (как app.js), класс сразу в HTML, без сдвига при загрузке.
+    // Длинное название - мельче (как app.js), класс сразу в HTML, без сдвига при загрузке.
     if ((t.hero.name || "").length > 30) html = eachTag(html, 'id="top"', (tag) => tag.replace(/class="([^"]*)"/, (m, c) => 'class="' + c + ' long-name"'));
     const areas = t.contacts.areasText || "";
     html = eachTag(html, 'id="hero-areas"', (tag) => tagAttr(tag, "hidden", !areas));
@@ -629,7 +629,7 @@ var QPageCore = (function () {
     linkBtn("credentials-link", (S.credentials || {}).link);
     const docs = (S.credentials || {}).docs || [];
     html = inner(html, "credentials-docs", docs.map((src, i) => '<li><a href="' + e(src) + '" target="_blank" rel="noopener"><img src="' + e(src) +
-      '" alt="' + e(t.credentials.title + " — " + (i + 1)) + '" loading="lazy" width="240" height="320"></a></li>').join(""));
+      '" alt="' + e(t.credentials.title + " - " + (i + 1)) + '" loading="lazy" width="240" height="320"></a></li>').join(""));
     html = eachTag(html, 'id="credentials-docs"', (tag) => tagAttr(tag, "hidden", !docs.length));
     html = inner(html, "credentials-list", (t.credentials.items || []).map((x) => "<li>" + ICON("check") + "<span>" + e(x) + "</span></li>").join(""));
     html = inner(html, "steps-list", (t.steps.items || []).map((x) => "<li>" + e(x) + "</li>").join(""));
@@ -649,7 +649,7 @@ var QPageCore = (function () {
         (hasPrice ? '<strong class="photo-price">' + e(money(g.price, lang)) + "</strong>" : "") + "</figure></li>";
     }).join(""));
 
-    // Видео: YouTube — кнопка «показать», другое — ссылка на тот сайт.
+    // Видео: YouTube - кнопка «показать», другое - ссылка на тот сайт.
     const vmode = S.video.youtube ? "youtube" : "link";
     html = eachTag(html, "data-video-mode=", (tag) => tagAttr(tag, "hidden", tag.indexOf('data-video-mode="' + vmode + '"') === -1));
     if (vmode === "link" && S.video.link) {
@@ -678,7 +678,7 @@ var QPageCore = (function () {
     html = eachTag(html, 'id="map-google"', (tag) => tagAttr(tag, "href", "https://www.google.com/maps/search/?api=1&query=" + q));
     html = eachTag(html, 'id="map-waze"', (tag) => tagAttr(tag, "href", hasCoords ? "https://waze.com/ul?ll=" + q + "&navigate=yes" : "https://waze.com/ul?q=" + q + "&navigate=yes"));
 
-    // Тексты со ссылками: {contact} — «написать нам» (почта) или «позвонить нам», {privacy} — раздел «Конфиденциальность».
+    // Тексты со ссылками: {contact} - «написать нам» (почта) или «позвонить нам», {privacy} - раздел «Конфиденциальность».
     const rich = (str) => String(str || "").split(/(\{contact\}|\{email\}|\{privacy\})/).map((part) => {
       if (part === "{contact}" || part === "{email}") {
         return c.email ? '<a href="mailto:' + e(c.email) + '" class="text-link">' + e(t.ui.contactEmail || c.email) + "</a>"
@@ -711,7 +711,7 @@ var QPageCore = (function () {
   function seoHead(html, data, seo, media) {
     const S = data.site, lang = S.defaultLang, t = data.text[lang], c = S.contacts, url = seo.url;
     const abs = (p) => (url ? url + p : "");
-    // Картинка для превью ссылки (WhatsApp, Facebook): первое фото, иначе логотип клиента (не SVG — его соцсети не показывают).
+    // Картинка для превью ссылки (WhatsApp, Facebook): первое фото, иначе логотип клиента (не SVG - его соцсети не показывают).
     const ogImg = S.mainPhoto || (S.gallery.length ? S.gallery[0].src : !/\.svg$/i.test(S.logo) ? S.logo : "");
     const tags = [];
     const meta = (prop, content) => { if (content) tags.push('<meta property="' + prop + '" content="' + escXml(content) + '">'); };
@@ -756,8 +756,8 @@ var QPageCore = (function () {
     return html.replace(/(<meta name="description" content="[^"]*">)/, "$1\n  " + tags.join("\n  "));
   }
 
-  // Ширина и высота картинки по первым байтам файла (PNG, JPEG, GIF, WebP); не узнали — null.
-  // bytes — массив чисел (в Apps Script байты со знаком, поэтому & 255).
+  // Ширина и высота картинки по первым байтам файла (PNG, JPEG, GIF, WebP); не узнали - null.
+  // bytes - массив чисел (в Apps Script байты со знаком, поэтому & 255).
   function imageSize(bytes) {
     const b = (i) => bytes[i] & 255;
     const u16 = (i) => (b(i) << 8) | b(i + 1), u16le = (i) => b(i) | (b(i + 1) << 8);
@@ -786,8 +786,8 @@ var QPageCore = (function () {
 
   const COPY = ["index.html", "_headers", "netlify.toml", "assets/css/style.css", "assets/js/app.js", "assets/js/vendor/qrcode.min.js"];
 
-  // Готовые файлы сайта: { "index.html": "...", ... }. tplFiles — файлы шаблона по тем же путям,
-  // tplText — тексты шаблона (window.QPAGE.text из его content.js).
+  // Готовые файлы сайта: { "index.html": "...", ... }. tplFiles - файлы шаблона по тем же путям,
+  // tplText - тексты шаблона (window.QPAGE.text из его content.js).
   function siteFiles(fields, tplFiles, tplText, sourceName, media) {
     const built = buildData(fields, { text: tplText }, media);
     const data = { site: built.site, text: built.text };
@@ -807,27 +807,27 @@ var QPageCore = (function () {
     if (data.site.form.mode === "netlify") {
       html = html.replace('<form id="contact-form" name="contact" method="post"', '<form id="contact-form" name="contact" method="post" data-netlify="true" data-netlify-honeypot="website"');
     }
-    // Вся страница на основном языке — прямо в HTML (подписи полей формы тоже: по ним Netlify
+    // Вся страница на основном языке - прямо в HTML (подписи полей формы тоже: по ним Netlify
     // подписывает поля в письме о заявке). Скрипт потом ставит язык посетителя.
     html = prerender(html, data, media);
     html = seoHead(html, data, built.seo, media);
     if (data.site.logo !== "assets/img/logo.svg") {
-      // Свой логотип клиента — он же значок вкладки.
+      // Свой логотип клиента - он же значок вкладки.
       const ext = data.site.logo.split(".").pop().toLowerCase();
       const type = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", svg: "image/svg+xml", gif: "image/gif" }[ext];
       html = html.replace('<link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">',
         '<link rel="icon" href="' + data.site.logo + '" type="' + type + '">');
     }
-    // Метка версии у стилей и скриптов: браузер берёт их из кэша до часа, а с новой меткой — сразу новые.
+    // Метка версии у стилей и скриптов: браузер берёт их из кэша до часа, а с новой меткой - сразу новые.
     const ver = Date.now().toString(36);
     html = html.replace(/(href|src)="(assets\/(?:css|js)\/[^"?]+\.(?:css|js))"/g, (m, a, f) => a + '="' + f + "?v=" + ver + '"');
     files["index.html"] = html;
     files["assets/js/content.js"] = contentJs(data, sourceName);
     files["assets/img/logo.svg"] = logoSvg(t.hero.name, data.site.theme.accent);
-    // Цвета сайта — сразу в стилях (а не только из скрипта): страница не мигает цветом шаблона.
+    // Цвета сайта - сразу в стилях (а не только из скрипта): страница не мигает цветом шаблона.
     const th = data.site.theme;
     files["assets/css/style.css"] += "\n/* Цвета этого сайта (генератор) */\n:root { --accent: " + th.accent + "; --accent-dark: " + th.accentDark + "; --accent-soft: " + th.accentSoft + "; }\n";
-    // Для поисковиков: что можно сканировать и где карта сайта (карта — только если известен адрес сайта).
+    // Для поисковиков: что можно сканировать и где карта сайта (карта - только если известен адрес сайта).
     const url = built.seo.url;
     files["robots.txt"] = "User-agent: *\nAllow: /\n" + (url ? "\nSitemap: " + url + "sitemap.xml\n" : "");
     if (url) {

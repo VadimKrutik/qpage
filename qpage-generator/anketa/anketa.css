@@ -1,6 +1,6 @@
 /* Анкета QPortall. Цвет кнопок и фон группы (?k=…) задаёт anketa.js. */
 :root {
-  --accent: #c000b8;          /* малиновый QPortall — только акцентом: полоса шага, выбранное, фокус */
+  --accent: #c000b8;          /* малиновый QPortall - только акцентом: полоса шага, выбранное, фокус */
   --btn: #17171c;             /* главные кнопки */
   --btn-text: #fff;
   --text: #17171c;
@@ -23,7 +23,7 @@ body {
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
-/* Фон: общий — спокойная заливка; у группы — картинка, затемнённая и размытая. */
+/* Фон: общий - спокойная заливка; у группы - картинка, затемнённая и размытая. */
 .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden;
   background: radial-gradient(900px 600px at 10% -10%, #fde7fb 0%, transparent 60%),
               radial-gradient(800px 600px at 110% 110%, #e6e9f7 0%, transparent 60%), #f3f1f4; }
@@ -117,7 +117,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 .sk .mo i:nth-child(3) { grid-column: span 2; }
 .sk .tx { height: 4px; background: #d9d7e0; }
 
-/* Да / Нет — переключатель */
+/* Да / Нет - переключатель */
 .gate { border: 1.5px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin: 0 0 12px; }
 .gate.on { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
 .switch { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; font-weight: 600; }
