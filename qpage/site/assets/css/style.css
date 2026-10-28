@@ -406,13 +406,8 @@ a:hover { color: var(--accent); }
   .hero:not(.has-portrait) .hero-banner h1,
   .hero:not(.has-portrait) .hero-banner .hero-facts { grid-column: 1; }
   .hero-portrait { border-width: 3px; }
-  /* QR на телефоне - справа в заливке, как на компьютере, но вместо кода маленький значок «QR» в тонких уголках
-     (крупный код теснил название). Код крупно - по нажатию. */
-  .hero-banner > .container:has(> .hero-qr:not([hidden])) { grid-template-columns: var(--pw) minmax(0, 1fr) 44px; column-gap: 10px; }
-  .hero-banner > .container:has(> .hero-qr:not([hidden])) :is(h1, .hero-facts) { grid-column: 2; }
-  .hero-qr { --qw: 44px; padding: 0; }
-  .hero-qr-tile { display: none; }
-  .hero-qr-label { display: flex; }
+  /* QR-кода в заливке на телефоне нет (теснит название; Vadim 28.10 - оставить как было). Код - в блоке QR внизу. */
+  .hero-qr { display: none; }
   /* Две кнопки под «Где работаем» - одинаковой ширины, во всю строку. */
   .hero-actions { width: 100%; }
   .hero-actions .btn { flex: 1 1 0; }
