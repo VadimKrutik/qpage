@@ -274,11 +274,11 @@
   // Фото документа - по центру экрана поверх сайта (а не в новой вкладке у левого края).
   // Нет поддержки <dialog> - ссылка откроет фото как обычно.
   var CLOSE = { ru: "Закрыть", he: "סגירה", en: "Close" };
-  function showDoc(a) {
+  function viewer() {
     var d = $("#doc-view");
     if (!d) {
       d = el("dialog", { id: "doc-view", "class": "doc-view" });
-      if (typeof d.showModal !== "function") return false;
+      if (typeof d.showModal !== "function") return null;
       d.appendChild(el("img", { alt: "" }));
       var close = el("button", { type: "button", "class": "doc-close", text: "×" });
       close.addEventListener("click", function () { d.close(); });
@@ -287,12 +287,31 @@
       d.addEventListener("click", function (e) { if (e.target === d) d.close(); });
       document.body.appendChild(d);
     }
-    var img = a.querySelector("img");
-    d.querySelector("img").src = a.getAttribute("href");
-    d.querySelector("img").alt = img ? img.alt : "";
     d.querySelector(".doc-close").setAttribute("aria-label", CLOSE[document.documentElement.lang] || CLOSE.en);
+    return d;
+  }
+  function showDoc(a) {
+    var d = viewer();
+    if (!d) return false;
+    var img = a.querySelector("img");
+    var big = d.querySelector("img");
+    big.hidden = false;
+    big.src = a.getAttribute("href");
+    big.alt = img ? img.alt : "";
+    var qr = d.querySelector(".qr-big");
+    if (qr) qr.remove();
     d.showModal();
     return true;
+  }
+  // QR-код крупно: владелец показывает экран клиенту, камера ловит наверняка.
+  function showQr() {
+    var d = viewer();
+    if (!d) return;
+    d.querySelector("img").hidden = true;
+    var qr = d.querySelector(".qr-big") || d.insertBefore(el("div", { "class": "qr-big", role: "img" }), d.firstChild);
+    qr.innerHTML = $("#hero-qr").dataset.svg || "";
+    qr.setAttribute("aria-label", t.qr.title);
+    d.showModal();
   }
 
   function renderSteps() {
@@ -492,6 +511,10 @@
     qr.make();
     var svg = qr.createSvgTag({ cellSize: 6, margin: 4, scalable: true });
     $("#qr-code").innerHTML = svg;
+    // Код в заливке: без своих белых полей - их даёт плитка.
+    var heroSvg = qr.createSvgTag({ cellSize: 6, margin: 0, scalable: true });
+    $("#hero-qr-code").innerHTML = heroSvg;
+    $("#hero-qr").dataset.svg = svg;
     var svgEl = $("#qr-code svg");
     if (svgEl) { svgEl.setAttribute("aria-hidden", "true"); svgEl.setAttribute("focusable", "false"); }
     $("#qr-url").textContent = withLang;
@@ -847,6 +870,7 @@
     $("#map-show").addEventListener("click", showMap);
     $("#video-show").addEventListener("click", showVideo);
     $("#qr-share").addEventListener("click", shareSite);
+    $("#hero-qr").addEventListener("click", showQr);
     // Ссылки «Конфиденциальность» и «Доступность» в подвале сразу раскрывают полный текст.
     var MORE = { "#privacy": "#privacy-more", "#accessibility": "#accessibility-more" };
     function openMore(hash) { if (MORE[hash]) $(MORE[hash]).open = true; }

@@ -116,6 +116,9 @@
           <!-- Вид деятельности - в заголовке вместе с названием: так поисковик видит, чем занимается бизнес -->
           <h1 id="hero-title"><span class="hero-kind" data-i18n="hero.kind"></span> <span class="hero-name" data-i18n="hero.name"></span></h1>
           <ul class="hero-facts" id="hero-facts"></ul>
+          <!-- QR-код сайта справа (симметрично фото владельца): владелец показывает его клиенту прямо с экрана.
+               По нажатию - крупно по центру экрана. Рисует app.js (renderQr). -->
+          <button class="hero-qr" id="hero-qr" type="button" data-block="qr" data-i18n-attr="aria-label:qr.title"><span class="hero-qr-tile" id="hero-qr-code"></span></button>
         </div>
       </div>
       <div class="container hero-body">
