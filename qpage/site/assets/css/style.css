@@ -498,6 +498,25 @@ a:hover { color: var(--accent); }
   background: var(--bg-soft);
 }
 .doc-photos a:hover img { border-color: var(--accent); }
+/* Фото документа во весь размер - по центру экрана, на затемнении. */
+.doc-view { padding: 0; border: 0; background: transparent; max-width: 94vw; max-height: 94vh; overflow: visible; }
+.doc-view::backdrop { background: rgba(0, 0, 0, 0.8); }
+.doc-view img { display: block; max-width: 94vw; max-height: 90vh; width: auto; height: auto; border-radius: 8px; background: #fff; }
+.doc-close {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #17171c;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
 
 .price-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
 .price-table th, .price-table td { padding: 12px 0; border-bottom: 1px solid var(--border); text-align: start; vertical-align: top; }

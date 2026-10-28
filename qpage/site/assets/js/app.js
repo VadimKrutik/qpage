@@ -271,6 +271,30 @@
     linkButton($("#credentials-link"), (SITE.credentials || {}).link);
   }
 
+  // Фото документа - по центру экрана поверх сайта (а не в новой вкладке у левого края).
+  // Нет поддержки <dialog> - ссылка откроет фото как обычно.
+  var CLOSE = { ru: "Закрыть", he: "סגירה", en: "Close" };
+  function showDoc(a) {
+    var d = $("#doc-view");
+    if (!d) {
+      d = el("dialog", { id: "doc-view", "class": "doc-view" });
+      if (typeof d.showModal !== "function") return false;
+      d.appendChild(el("img", { alt: "" }));
+      var close = el("button", { type: "button", "class": "doc-close", text: "×" });
+      close.addEventListener("click", function () { d.close(); });
+      d.appendChild(close);
+      // Нажатие мимо фото (на затемнение) тоже закрывает.
+      d.addEventListener("click", function (e) { if (e.target === d) d.close(); });
+      document.body.appendChild(d);
+    }
+    var img = a.querySelector("img");
+    d.querySelector("img").src = a.getAttribute("href");
+    d.querySelector("img").alt = img ? img.alt : "";
+    d.querySelector(".doc-close").setAttribute("aria-label", CLOSE[document.documentElement.lang] || CLOSE.en);
+    d.showModal();
+    return true;
+  }
+
   function renderSteps() {
     var list = $("#steps-list");
     list.textContent = "";
@@ -831,6 +855,8 @@
     document.addEventListener("click", function (e) {
       var a = e.target.closest && e.target.closest("a[href^='#']");
       if (a) openMore(a.getAttribute("href"));
+      var doc = e.target.closest && e.target.closest(".doc-photos a");
+      if (doc && showDoc(doc)) e.preventDefault();
     });
     openMore(location.hash);
     initForm();
