@@ -274,6 +274,28 @@
   // Фото документа - по центру экрана поверх сайта (а не в новой вкладке у левого края).
   // Нет поддержки <dialog> - ссылка откроет фото как обычно.
   var CLOSE = { ru: "Закрыть", he: "סגירה", en: "Close" };
+  var SAVE = { ru: "Скачать", he: "הורדה", en: "Download" };
+  // QR-код картинкой PNG 1024×1024 (рисуем SVG на холсте). Не вышло - остаётся SVG.
+  function qrPng(done) {
+    var svg = $("#hero-qr").dataset.svg;
+    if (!svg) return;
+    var img = new Image();
+    var url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+    img.onload = function () {
+      try {
+        var c = document.createElement("canvas");
+        c.width = c.height = 1024;
+        var g = c.getContext("2d");
+        g.fillStyle = "#fff";
+        g.fillRect(0, 0, 1024, 1024);
+        g.imageSmoothingEnabled = false;
+        g.drawImage(img, 0, 0, 1024, 1024);
+        c.toBlob(function (b) { if (b) done(URL.createObjectURL(b)); }, "image/png");
+      } catch (e) { /* остаётся SVG */ }
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }
   function viewer() {
     var d = $("#doc-view");
     if (!d) {
@@ -298,8 +320,7 @@
     big.hidden = false;
     big.src = a.getAttribute("href");
     big.alt = img ? img.alt : "";
-    var qr = d.querySelector(".qr-big");
-    if (qr) qr.remove();
+    $all("#doc-view .qr-big, #doc-view .qr-save").forEach(function (n) { n.remove(); });
     d.showModal();
     return true;
   }
@@ -311,6 +332,12 @@
     var qr = d.querySelector(".qr-big") || d.insertBefore(el("div", { "class": "qr-big", role: "img" }), d.firstChild);
     qr.innerHTML = $("#hero-qr").dataset.svg || "";
     qr.setAttribute("aria-label", t.qr.title);
+    // Под кодом - «Скачать» картинкой PNG: её откроет любая галерея телефона (SVG - не всякая).
+    var save = d.querySelector(".qr-save") || d.insertBefore(el("div", { "class": "qr-save" }), qr.nextSibling);
+    save.textContent = "";
+    var link = save.appendChild(el("a", { "class": "btn btn-primary", href: $("#qr-download").getAttribute("href"), download: "qr-code.svg",
+      text: SAVE[document.documentElement.lang] || SAVE.en }));
+    qrPng(function (url) { link.setAttribute("href", url); link.setAttribute("download", "qr-code.png"); });
     d.showModal();
   }
 
@@ -871,7 +898,6 @@
     $("#video-show").addEventListener("click", showVideo);
     $("#qr-share").addEventListener("click", shareSite);
     $("#hero-qr").addEventListener("click", showQr);
-    $("#header-qr").addEventListener("click", showQr);
     // Ссылки «Конфиденциальность» и «Доступность» в подвале сразу раскрывают полный текст.
     var MORE = { "#privacy": "#privacy-more", "#accessibility": "#accessibility-more" };
     function openMore(hash) { if (MORE[hash]) $(MORE[hash]).open = true; }
