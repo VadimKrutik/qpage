@@ -1,4 +1,4 @@
-// ===================== Ядро генератора (core.js, собрано build-gs.js 2026-10-28) =====================
+// ===================== Ядро генератора (core.js, собрано build-gs.js 2026-11-01) =====================
 /*
  * QPage - ядро генератора: из листа анкеты делает файлы сайта.
  * Один и тот же код работает в Node (generate.js) и в Google Apps Script (сборка build-gs.js).
@@ -151,7 +151,7 @@ var QPageCore = (function () {
     return m && m[2].length <= 40 ? { text: m[1], name: m[2] } : { text: String(line || "").trim(), name: "" };
   }
 
-  // Часы работы из анкеты: дни галочками + «8-19» → «Вс–Чт 8:00-19:00, Пт 8:00-13:00» на каждом языке.
+  // Часы работы из анкеты: дни галочками + «8-19» → «Вс-Чт 8:00-19:00, Пт 8:00-13:00» на каждом языке.
   const DAY_NAMES = {
     ru: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
     he: ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"],
@@ -170,14 +170,14 @@ var QPageCore = (function () {
   function normHours(s) {
     const m = String(s || "").trim().match(/^(\d{1,2})(?:[:.](\d{2}))?\s*[-–—]\s*(\d{1,2})(?:[:.](\d{2}))?$/);
     if (!m || +m[1] > 24 || +m[3] > 24) return null;
-    return +m[1] + ":" + (m[2] || "00") + "–" + +m[3] + ":" + (m[4] || "00");
+    return +m[1] + ":" + (m[2] || "00") + "-" + +m[3] + ":" + (m[4] || "00");
   }
   function dayRanges(days, names) {
     const parts = [];
     for (let i = 0; i < days.length; i++) {
       let j = i;
       while (j + 1 < days.length && days[j + 1] === days[j] + 1) j++;
-      parts.push(j - i >= 2 ? names[days[i]] + "–" + names[days[j]] : days.slice(i, j + 1).map((d) => names[d]).join(", "));
+      parts.push(j - i >= 2 ? names[days[i]] + "-" + names[days[j]] : days.slice(i, j + 1).map((d) => names[d]).join(", "));
       i = j;
     }
     return parts.join(", ");
@@ -744,7 +744,7 @@ var QPageCore = (function () {
     if (typeof S.map.lat === "number" && typeof S.map.lon === "number") ld.geo = { "@type": "GeoCoordinates", latitude: S.map.lat, longitude: S.map.lon };
     if (t.contacts.areasText) ld.areaServed = t.contacts.areasText;
     if (seo.days.length && seo.hours) {
-      const hm = (x) => x.split("–").map((s) => ("0" + s).slice(-5));
+      const hm = (x) => x.split("-").map((s) => ("0" + s).slice(-5));
       const spec = (days, h) => ({ "@type": "OpeningHoursSpecification", dayOfWeek: days.map((d) => SCHEMA_DAYS[d]), opens: hm(h)[0], closes: hm(h)[1] });
       const fri = seo.friday && seo.friday !== seo.hours && seo.days.includes(5);
       const usual = fri ? seo.days.filter((d) => d !== 5) : seo.days;

@@ -256,7 +256,7 @@ window.QPAGE = {
         phone: "Телефон",
         email: "Эл. почта",
         hours: "Часы работы",
-        hoursText: "Вс–Чт 8:00-19:00, Пт 8:00-13:00",
+        hoursText: "Вс-Чт 8:00-19:00, Пт 8:00-13:00",
         areas: "Где работаем?",
         areasText: "Хайфа, Крайот, Нешер, Тират-Кармель",
         actionsTitle: "Свяжитесь с нами"
@@ -476,7 +476,7 @@ window.QPAGE = {
         phone: "טלפון",
         email: "דוא״ל",
         hours: "שעות פעילות",
-        hoursText: "א׳–ה׳ \u20668:00-19:00\u2069, ו׳ \u20668:00-13:00\u2069",  // \u2066…\u2069 - время слева направо
+        hoursText: "א׳-ה׳ \u20668:00-19:00\u2069, ו׳ \u20668:00-13:00\u2069",  // \u2066…\u2069 - время слева направо
         areas: "איפה אנחנו עובדים?",
         areasText: "חיפה, הקריות, נשר, טירת כרמל",
         actionsTitle: "דברו איתנו"
@@ -696,7 +696,7 @@ window.QPAGE = {
         phone: "Phone",
         email: "Email",
         hours: "Opening hours",
-        hoursText: "Sun–Thu 8:00-19:00, Fri 8:00-13:00",
+        hoursText: "Sun-Thu 8:00-19:00, Fri 8:00-13:00",
         areas: "Where do we work?",
         areasText: "Haifa, the Krayot, Nesher, Tirat Carmel",
         actionsTitle: "Get in touch"
