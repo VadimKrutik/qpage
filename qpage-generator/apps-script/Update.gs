@@ -46,6 +46,7 @@ function saveGithubToken(token) {
   if (r.getResponseCode() === 401) throw new Error("GitHub не принял ключ. Скопируйте его ещё раз целиком.");
   if (r.getResponseCode() !== 200) throw new Error("Ключ не видит репозиторий qpage. Проверьте шаг 2 (Only select repositories - qpage).");
   p.setProperty("GITHUB_TOKEN", token);
+  ensureUpdateTrigger();
   return "<b>Подключено.</b> Окно можно закрыть и запустить «QPortall → Обновить скрипт QPortall».";
 }
 
@@ -80,9 +81,74 @@ function updateScript() {
     ["https://www.googleapis.com/auth/script.projects", "https://www.googleapis.com/auth/script.deployments"]);
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(240000)) throw new Error("QPortall: сейчас собирается сайт. Запустите обновление через пару минут.");
-  try { notify(updateScriptNow(p, token)); }
+  try { notify(updateScriptNow(p, token)); ensureUpdateTrigger(); }
   catch (e) { notify("Обновить не получилось. " + e.message); }
   finally { lock.releaseLock(); }
+}
+
+// Каждую ночь (около UPDATE_HOUR) скрипт сам проверяет GitHub и обновляется. Письмо - только если что-то изменилось
+// или обновление не прошло (одна и та же ошибка - одно письмо).
+var UPDATE_HOUR = 4;
+function ensureUpdateTrigger() {
+  if (!PropertiesService.getScriptProperties().getProperty("GITHUB_TOKEN")) return;
+  var has = ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === "autoUpdateScript"; });
+  if (!has) ScriptApp.newTrigger("autoUpdateScript").timeBased().everyDays(1).atHour(UPDATE_HOUR).create();
+}
+
+function autoUpdateScript() {
+  var p = PropertiesService.getScriptProperties(), token = p.getProperty("GITHUB_TOKEN");
+  if (!token) return;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(240000)) return; // собирается сайт - попробуем завтра
+  var msg, failed = false;
+  try { msg = updateScriptNow(p, token); }
+  catch (e) { msg = "Обновить не получилось. " + e.message; failed = true; }
+  finally { lock.releaseLock(); }
+  if (/^Уже стоит/.test(msg)) { p.deleteProperty("UPDATE_ERROR"); return; }
+  if (failed && p.getProperty("UPDATE_ERROR") === msg) return;
+  if (failed) p.setProperty("UPDATE_ERROR", msg); else p.deleteProperty("UPDATE_ERROR");
+  try {
+    MailApp.sendEmail(Session.getEffectiveUser().getEmail(), failed ? "QPortall: обновление не прошло" : "QPortall: скрипт обновлён",
+      msg.replace(/\nОбновите страницу таблицы[^\n]*/, ""));
+  } catch (e) { Logger.log(msg); }
+}
+
+// Анкета изменилась → публикуем её отдельным запуском через минуту: в нём уже работает новый код.
+function scheduleAnketaPublish() {
+  if (!PropertiesService.getScriptProperties().getProperty("NETLIFY_TOKEN")) return false;
+  ScriptApp.newTrigger("autoPublishAnketa").timeBased().after(60 * 1000).create();
+  return true;
+}
+
+function autoPublishAnketa() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === "autoPublishAnketa") ScriptApp.deleteTrigger(t); });
+  if (typeof anketaApi === "function" && anketaApi()) publishAnketa();
+}
+
+// ---------- Общие листы: всегда слева и тёмные, листы клиентов - после них ----------
+var COMMON_TAB_COLOR = "#37474f";
+function commonSheetOrder() {
+  return [SITES_SHEET].concat(typeof ANKETA_SHEET === "string" ? [ANKETA_SHEET, CH_SHEET, BG_SHEET, ANKETA_SETTINGS_SHEET] : [])
+    .concat([RESPONSES_SHEET]);
+}
+
+function isCommonSheet(sh) {
+  var name = sh.getName();
+  return commonSheetOrder().indexOf(name) !== -1 || name.indexOf(RESPONSES_SHEET + " (") === 0 || !!sh.getFormUrl();
+}
+
+// Ставит общие листы первыми в постоянном порядке и красит вкладки. Возвращает, сколько их.
+function arrangeSheets(ss) {
+  var order = commonSheetOrder();
+  var rank = function (sh) { var i = order.indexOf(sh.getName()); return i === -1 ? order.length : i; };
+  var commons = ss.getSheets().filter(isCommonSheet).sort(function (a, b) { return rank(a) - rank(b) || a.getIndex() - b.getIndex(); });
+  var active = ss.getActiveSheet(), moved = false;
+  commons.forEach(function (sh, i) {
+    sh.setTabColor(COMMON_TAB_COLOR);
+    if (sh.getIndex() !== i + 1) { ss.setActiveSheet(sh); ss.moveActiveSheet(i + 1); moved = true; }
+  });
+  if (moved && active) ss.setActiveSheet(active);
+  return commons.length;
 }
 
 function updateScriptNow(p, token) {
@@ -126,8 +192,9 @@ function updateScriptNow(p, token) {
   p.setProperty("UPDATE_SHA", sha);
   p.setProperty("UPDATE_DATE", when);
   if (!changed.length) return "Уже стоит последняя версия (" + when + ").";
-  var page = changed.some(function (n) { return /^(anketa|stranica)$/i.test(n); }) ?
-    "\nАнкета изменилась: нажмите «QPortall → Опубликовать анкету QPortall»." : "";
+  var page = !changed.some(function (n) { return /^(anketa|stranica)$/i.test(n); }) ? "" :
+    scheduleAnketaPublish() ? "\nАнкета изменилась и опубликуется сама через минуту." :
+    "\nАнкета изменилась: нажмите «QPortall → Опубликовать анкету QPortall».";
   return "Скрипт обновлён до версии от " + when + ". Изменены: " + changed.join(", ") + "." + web + page +
     "\nОбновите страницу таблицы (F5), чтобы меню взяло новую версию.";
 }

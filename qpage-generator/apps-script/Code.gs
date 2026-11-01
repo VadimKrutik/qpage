@@ -303,6 +303,8 @@ function addMenu() {
   var ui;
   try { ui = SpreadsheetApp.getUi(); } catch (e) { return; } // запуск без открытой таблицы
   var menu = ui.createMenu("QPortall");
+  // Заодно: общие листы - слева, ночное автообновление включено. Ошибка здесь не должна убрать меню.
+  try { arrangeSheets(SpreadsheetApp.getActiveSpreadsheet()); ensureUpdateTrigger(); } catch (e) { Logger.log(e); }
   if (!PropertiesService.getScriptProperties().getProperty("FORM_ID")) {
     menu.addItem("Первая настройка (создать форму)", "setup")
       .addItem("Инструкция", "showHelp");
@@ -502,12 +504,17 @@ function showLinks() { notify(links()); }
 // Шпаргалка «QPortall → Инструкция»: как обновить скрипт, сделать и поправить сайт, удалить его.
 var HELP_HTML = [
   "<h3>1. Новая версия скрипта</h3><ol>",
-  "<li>Скрипт состоит из шести файлов: <b>QPortall-1-kod.gs</b> … <b>QPortall-6-stranica.gs</b> (папка <b>C:\\ClaudeWork\\QPage-generator\\dist</b>).</li>",
-  "<li>В этой таблице: <b>Расширения → Apps Script</b>.</li>",
-  "<li>Откройте <b>QPortall-1-kod.gs</b> в Блокноте, <b>Ctrl+A</b>, <b>Ctrl+C</b>. В Apps Script слева файл <b>Code.gs</b>: <b>Ctrl+A</b>, <b>Ctrl+V</b>, <b>Ctrl+S</b>.</li>",
-  "<li>Так же <b>QPortall-2-shablon.gs</b> → в файл <b>Shablon.gs</b>, а <b>QPortall-3-shablon2.gs</b> → в файл <b>Shablon2.gs</b> (если его нет: <b>+ → Скрипт</b>, имя <b>Shablon2</b>), <b>QPortall-4-anketa.gs</b> → в файл <b>Anketa.gs</b>, <b>QPortall-5-yadro.gs</b> → в файл <b>Yadro.gs</b>, <b>QPortall-6-stranica.gs</b> → в файл <b>Stranica.gs</b>. Шаблон меняется не всегда, но лишний раз вставить не вредно.</li>",
-  "<li>Закройте вкладку Apps Script, обновите таблицу (<b>F5</b>).</li>",
-  "<li>Если в анкете появились новые вопросы: <b>QPortall → Обновить форму</b>.</li></ol>",
+  "<li>Скрипт обновляется сам каждую ночь (около 4:00) из GitHub; если что-то изменилось, придёт письмо. Анкета, если менялась, публикуется сама.</li>",
+  "<li>Нужно сразу - <b>QPortall → Обновить скрипт QPortall</b>, потом обновите таблицу (<b>F5</b>).</li>",
+  "<li>Ключ GitHub перестал работать - <b>QPortall → Подключить обновления (GitHub)</b>. Если Google спрашивает разрешения - ставьте <b>«Выбрать все»</b>.</li>",
+  "<li>Если в анкете появились новые вопросы: <b>QPortall → Обновить форму</b> (это только для запасной Google Формы).</li></ol>",
+  "<h3>Общие листы (тёмные вкладки слева)</h3><ul>",
+  "<li><b>Сайты</b> - все сайты: ссылки, «проверить», правки клиента, канал, <b>оплачено</b>.</li>",
+  "<li><b>Анкеты QPortall</b> - все пришедшие анкеты и статус сборки.</li>",
+  "<li><b>Каналы</b> - откуда пришли клиенты (см. ниже).</li>",
+  "<li><b>Фоны анкеты</b>, <b>Настройки анкеты</b> - вид анкеты, лимиты, выключатель.</li>",
+  "<li><b>Ответы</b> - ответы запасной Google Формы.</li>",
+  "<li>Остальные листы - по одному на клиента, новые сразу после общих.</li></ul>",
   "<h3>2. Новый клиент</h3><ol>",
   "<li><b>QPortall → Ссылки</b> → «Ссылка для клиента» - отправьте её клиенту.</li>",
   "<li>После отправки анкеты сайт собирается сам за 1-2 минуты: новый лист клиента и строка на листе <b>«Сайты»</b>.</li>",
@@ -609,9 +616,8 @@ function buildSiteSheet(ss, named) {
   var a = answersByKey(named);
   var rows = siteRows(a);
   var tabName = uniqueSheetName(ss, slugify(a.nameEn || a.name));
-  // Новый лист - сразу после «Сайты» (вторым слева), чтобы не искать его в конце.
-  var sites = ss.getSheetByName(SITES_SHEET);
-  var sh = ss.insertSheet(tabName, sites ? sites.getIndex() : 0);
+  // Новый лист - сразу после общих листов («Сайты», «Анкеты QPortall», «Каналы»…), чтобы не искать его в конце.
+  var sh = ss.insertSheet(tabName, arrangeSheets(ss));
   sh.getRange(1, 1, 1, TAB_HEADER.length).setValues([TAB_HEADER]).setFontWeight("bold");
   sh.getRange(2, 1, rows.length, TAB_HEADER.length).setNumberFormat("@").setValues(rows).setWrap(true);
   sh.setFrozenRows(1);

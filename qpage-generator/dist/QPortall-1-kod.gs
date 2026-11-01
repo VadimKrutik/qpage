@@ -303,6 +303,8 @@ function addMenu() {
   var ui;
   try { ui = SpreadsheetApp.getUi(); } catch (e) { return; } // запуск без открытой таблицы
   var menu = ui.createMenu("QPortall");
+  // Заодно: общие листы - слева, ночное автообновление включено. Ошибка здесь не должна убрать меню.
+  try { arrangeSheets(SpreadsheetApp.getActiveSpreadsheet()); ensureUpdateTrigger(); } catch (e) { Logger.log(e); }
   if (!PropertiesService.getScriptProperties().getProperty("FORM_ID")) {
     menu.addItem("Первая настройка (создать форму)", "setup")
       .addItem("Инструкция", "showHelp");
@@ -502,12 +504,17 @@ function showLinks() { notify(links()); }
 // Шпаргалка «QPortall → Инструкция»: как обновить скрипт, сделать и поправить сайт, удалить его.
 var HELP_HTML = [
   "<h3>1. Новая версия скрипта</h3><ol>",
-  "<li>Скрипт состоит из шести файлов: <b>QPortall-1-kod.gs</b> … <b>QPortall-6-stranica.gs</b> (папка <b>C:\\ClaudeWork\\QPage-generator\\dist</b>).</li>",
-  "<li>В этой таблице: <b>Расширения → Apps Script</b>.</li>",
-  "<li>Откройте <b>QPortall-1-kod.gs</b> в Блокноте, <b>Ctrl+A</b>, <b>Ctrl+C</b>. В Apps Script слева файл <b>Code.gs</b>: <b>Ctrl+A</b>, <b>Ctrl+V</b>, <b>Ctrl+S</b>.</li>",
-  "<li>Так же <b>QPortall-2-shablon.gs</b> → в файл <b>Shablon.gs</b>, а <b>QPortall-3-shablon2.gs</b> → в файл <b>Shablon2.gs</b> (если его нет: <b>+ → Скрипт</b>, имя <b>Shablon2</b>), <b>QPortall-4-anketa.gs</b> → в файл <b>Anketa.gs</b>, <b>QPortall-5-yadro.gs</b> → в файл <b>Yadro.gs</b>, <b>QPortall-6-stranica.gs</b> → в файл <b>Stranica.gs</b>. Шаблон меняется не всегда, но лишний раз вставить не вредно.</li>",
-  "<li>Закройте вкладку Apps Script, обновите таблицу (<b>F5</b>).</li>",
-  "<li>Если в анкете появились новые вопросы: <b>QPortall → Обновить форму</b>.</li></ol>",
+  "<li>Скрипт обновляется сам каждую ночь (около 4:00) из GitHub; если что-то изменилось, придёт письмо. Анкета, если менялась, публикуется сама.</li>",
+  "<li>Нужно сразу - <b>QPortall → Обновить скрипт QPortall</b>, потом обновите таблицу (<b>F5</b>).</li>",
+  "<li>Ключ GitHub перестал работать - <b>QPortall → Подключить обновления (GitHub)</b>. Если Google спрашивает разрешения - ставьте <b>«Выбрать все»</b>.</li>",
+  "<li>Если в анкете появились новые вопросы: <b>QPortall → Обновить форму</b> (это только для запасной Google Формы).</li></ol>",
+  "<h3>Общие листы (тёмные вкладки слева)</h3><ul>",
+  "<li><b>Сайты</b> - все сайты: ссылки, «проверить», правки клиента, канал, <b>оплачено</b>.</li>",
+  "<li><b>Анкеты QPortall</b> - все пришедшие анкеты и статус сборки.</li>",
+  "<li><b>Каналы</b> - откуда пришли клиенты (см. ниже).</li>",
+  "<li><b>Фоны анкеты</b>, <b>Настройки анкеты</b> - вид анкеты, лимиты, выключатель.</li>",
+  "<li><b>Ответы</b> - ответы запасной Google Формы.</li>",
+  "<li>Остальные листы - по одному на клиента, новые сразу после общих.</li></ul>",
   "<h3>2. Новый клиент</h3><ol>",
   "<li><b>QPortall → Ссылки</b> → «Ссылка для клиента» - отправьте её клиенту.</li>",
   "<li>После отправки анкеты сайт собирается сам за 1-2 минуты: новый лист клиента и строка на листе <b>«Сайты»</b>.</li>",
@@ -609,9 +616,8 @@ function buildSiteSheet(ss, named) {
   var a = answersByKey(named);
   var rows = siteRows(a);
   var tabName = uniqueSheetName(ss, slugify(a.nameEn || a.name));
-  // Новый лист - сразу после «Сайты» (вторым слева), чтобы не искать его в конце.
-  var sites = ss.getSheetByName(SITES_SHEET);
-  var sh = ss.insertSheet(tabName, sites ? sites.getIndex() : 0);
+  // Новый лист - сразу после общих листов («Сайты», «Анкеты QPortall», «Каналы»…), чтобы не искать его в конце.
+  var sh = ss.insertSheet(tabName, arrangeSheets(ss));
   sh.getRange(1, 1, 1, TAB_HEADER.length).setValues([TAB_HEADER]).setFontWeight("bold");
   sh.getRange(2, 1, rows.length, TAB_HEADER.length).setNumberFormat("@").setValues(rows).setWrap(true);
   sh.setFrozenRows(1);
@@ -1293,6 +1299,7 @@ function saveGithubToken(token) {
   if (r.getResponseCode() === 401) throw new Error("GitHub не принял ключ. Скопируйте его ещё раз целиком.");
   if (r.getResponseCode() !== 200) throw new Error("Ключ не видит репозиторий qpage. Проверьте шаг 2 (Only select repositories - qpage).");
   p.setProperty("GITHUB_TOKEN", token);
+  ensureUpdateTrigger();
   return "<b>Подключено.</b> Окно можно закрыть и запустить «QPortall → Обновить скрипт QPortall».";
 }
 
@@ -1327,9 +1334,74 @@ function updateScript() {
     ["https://www.googleapis.com/auth/script.projects", "https://www.googleapis.com/auth/script.deployments"]);
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(240000)) throw new Error("QPortall: сейчас собирается сайт. Запустите обновление через пару минут.");
-  try { notify(updateScriptNow(p, token)); }
+  try { notify(updateScriptNow(p, token)); ensureUpdateTrigger(); }
   catch (e) { notify("Обновить не получилось. " + e.message); }
   finally { lock.releaseLock(); }
+}
+
+// Каждую ночь (около UPDATE_HOUR) скрипт сам проверяет GitHub и обновляется. Письмо - только если что-то изменилось
+// или обновление не прошло (одна и та же ошибка - одно письмо).
+var UPDATE_HOUR = 4;
+function ensureUpdateTrigger() {
+  if (!PropertiesService.getScriptProperties().getProperty("GITHUB_TOKEN")) return;
+  var has = ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === "autoUpdateScript"; });
+  if (!has) ScriptApp.newTrigger("autoUpdateScript").timeBased().everyDays(1).atHour(UPDATE_HOUR).create();
+}
+
+function autoUpdateScript() {
+  var p = PropertiesService.getScriptProperties(), token = p.getProperty("GITHUB_TOKEN");
+  if (!token) return;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(240000)) return; // собирается сайт - попробуем завтра
+  var msg, failed = false;
+  try { msg = updateScriptNow(p, token); }
+  catch (e) { msg = "Обновить не получилось. " + e.message; failed = true; }
+  finally { lock.releaseLock(); }
+  if (/^Уже стоит/.test(msg)) { p.deleteProperty("UPDATE_ERROR"); return; }
+  if (failed && p.getProperty("UPDATE_ERROR") === msg) return;
+  if (failed) p.setProperty("UPDATE_ERROR", msg); else p.deleteProperty("UPDATE_ERROR");
+  try {
+    MailApp.sendEmail(Session.getEffectiveUser().getEmail(), failed ? "QPortall: обновление не прошло" : "QPortall: скрипт обновлён",
+      msg.replace(/\nОбновите страницу таблицы[^\n]*/, ""));
+  } catch (e) { Logger.log(msg); }
+}
+
+// Анкета изменилась → публикуем её отдельным запуском через минуту: в нём уже работает новый код.
+function scheduleAnketaPublish() {
+  if (!PropertiesService.getScriptProperties().getProperty("NETLIFY_TOKEN")) return false;
+  ScriptApp.newTrigger("autoPublishAnketa").timeBased().after(60 * 1000).create();
+  return true;
+}
+
+function autoPublishAnketa() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === "autoPublishAnketa") ScriptApp.deleteTrigger(t); });
+  if (typeof anketaApi === "function" && anketaApi()) publishAnketa();
+}
+
+// ---------- Общие листы: всегда слева и тёмные, листы клиентов - после них ----------
+var COMMON_TAB_COLOR = "#37474f";
+function commonSheetOrder() {
+  return [SITES_SHEET].concat(typeof ANKETA_SHEET === "string" ? [ANKETA_SHEET, CH_SHEET, BG_SHEET, ANKETA_SETTINGS_SHEET] : [])
+    .concat([RESPONSES_SHEET]);
+}
+
+function isCommonSheet(sh) {
+  var name = sh.getName();
+  return commonSheetOrder().indexOf(name) !== -1 || name.indexOf(RESPONSES_SHEET + " (") === 0 || !!sh.getFormUrl();
+}
+
+// Ставит общие листы первыми в постоянном порядке и красит вкладки. Возвращает, сколько их.
+function arrangeSheets(ss) {
+  var order = commonSheetOrder();
+  var rank = function (sh) { var i = order.indexOf(sh.getName()); return i === -1 ? order.length : i; };
+  var commons = ss.getSheets().filter(isCommonSheet).sort(function (a, b) { return rank(a) - rank(b) || a.getIndex() - b.getIndex(); });
+  var active = ss.getActiveSheet(), moved = false;
+  commons.forEach(function (sh, i) {
+    sh.setTabColor(COMMON_TAB_COLOR);
+    if (sh.getIndex() !== i + 1) { ss.setActiveSheet(sh); ss.moveActiveSheet(i + 1); moved = true; }
+  });
+  if (moved && active) ss.setActiveSheet(active);
+  return commons.length;
 }
 
 function updateScriptNow(p, token) {
@@ -1373,8 +1445,9 @@ function updateScriptNow(p, token) {
   p.setProperty("UPDATE_SHA", sha);
   p.setProperty("UPDATE_DATE", when);
   if (!changed.length) return "Уже стоит последняя версия (" + when + ").";
-  var page = changed.some(function (n) { return /^(anketa|stranica)$/i.test(n); }) ?
-    "\nАнкета изменилась: нажмите «QPortall → Опубликовать анкету QPortall»." : "";
+  var page = !changed.some(function (n) { return /^(anketa|stranica)$/i.test(n); }) ? "" :
+    scheduleAnketaPublish() ? "\nАнкета изменилась и опубликуется сама через минуту." :
+    "\nАнкета изменилась: нажмите «QPortall → Опубликовать анкету QPortall».";
   return "Скрипт обновлён до версии от " + when + ". Изменены: " + changed.join(", ") + "." + web + page +
     "\nОбновите страницу таблицы (F5), чтобы меню взяло новую версию.";
 }

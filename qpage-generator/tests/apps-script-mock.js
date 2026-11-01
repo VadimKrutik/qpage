@@ -43,6 +43,7 @@ class Sheet {
   getLastRow() { return this.cells.length; }
   getLastColumn() { return Math.max(...this.cells.map((r) => r.length)); }
   setFrozenRows() {} setColumnWidth() {}
+  setTabColor(c) { this.tab = c; }
   getActiveCell() { return { getRow: () => this.activeRow || 1 }; }
 }
 const ss = {
@@ -53,7 +54,9 @@ const ss = {
   getSheetByName(n) { return this.sheets.find((s) => s.name === n) || null; },
   insertSheet(n, idx) { const s = new Sheet(n); if (idx == null) this.sheets.push(s); else this.sheets.splice(idx, 0, s); return s; },
   getSpreadsheetTimeZone: () => "Asia/Jerusalem", linkedForm: null, getFormUrl() { return this.linkedForm; }, getActiveSheet() { return this.active; },
-  deleteSheet(s) { this.sheets = this.sheets.filter((x) => x !== s); }
+  deleteSheet(s) { this.sheets = this.sheets.filter((x) => x !== s); },
+  setActiveSheet(s) { this.active = s; return s; },
+  moveActiveSheet(pos) { const s = this.active; this.sheets.splice(this.sheets.indexOf(s), 1); this.sheets.splice(pos - 1, 0, s); }
 };
 const props = {};
 const form = {
@@ -231,7 +234,7 @@ uiAvailable = true;
 ctx.addMenu();
 ok("меню до настройки: «Первая настройка» и «Инструкция»", JSON.stringify(ctx.__menu.items) === '["setup","showHelp"]', JSON.stringify(ctx.__menu));
 ctx.showHelp();
-ok("«Инструкция»: окно с шагами (скрипт, клиент, правка, удаление в Netlify)", ["QPortall-1-kod.gs", "QPortall-2-shablon.gs", "QPortall-3-shablon2.gs", "QPortall-5-yadro.gs", "Ctrl+A", "Обновить форму", "Сделать сайт из этого листа", "Danger zone", "languages", "#1565C0"].every((w) => alerts[alerts.length - 1].includes(w)), alerts[alerts.length - 1].slice(0, 200));
+ok("«Инструкция»: окно с шагами (скрипт, клиент, правка, удаление в Netlify)", ["Обновить скрипт QPortall", "Подключить обновления", "Выбрать все", "Общие листы", "Каналы", "оплачено", "Обновить форму", "Сделать сайт из этого листа", "Danger zone", "languages", "#1565C0"].every((w) => alerts[alerts.length - 1].includes(w)), alerts[alerts.length - 1].slice(0, 200));
 alerts.pop();
 ctx.setup();
 ok("setup: показал ссылку на форму в таблице", alerts[0] && alerts[0].includes("https://forms/view"), alerts[0]);
@@ -295,7 +298,7 @@ ok("очередь: сборка по анкете берёт блокировк
 // Адрес ссылки в ячейке листа (на «Сайты» ссылки — короткими словами).
 const href = (sheet, row, col) => ((sheet.links[row] || [])[col]) || (sheet.cells[row] || [])[col];
 const sheetName = ss.sheets.map((x) => x.name).find((n) => n !== "Сайты" && !n.startsWith("Ответы"));
-ok("новый лист клиента — сразу после «Сайты»", ss.sheets.findIndex((x) => x.name === sheetName) === ss.sheets.findIndex((x) => x.name === "Сайты") + 1, ss.sheets.map((x) => x.name).join(", "));
+ok("новый лист клиента - сразу после общих («Сайты», «Ответы»)", ss.sheets.findIndex((x) => x.name === sheetName) === ss.sheets.filter((x) => x.name === "Сайты" || x.name.startsWith("Ответы")).length, ss.sheets.map((x) => x.name).join(", "));
 ok("ответ → лист сайта", !!sheetName, ss.sheets.map((x) => x.name).join());
 const sitesRoot = driveRoot.folders.find((f) => f.name === "QPage — сайты");
 const siteFolder = sitesRoot.folders.find((f) => f.name === sheetName && !f.trashed);
@@ -697,6 +700,26 @@ fs.writeFileSync(outFile, JSON.stringify(site, null, 1));
   props.GITHUB_TOKEN = keep.gh; props.ANKETA_API = keep.api; if (!keep.gh) delete props.GITHUB_TOKEN; if (!keep.api) delete props.ANKETA_API;
   ctx.UrlFetchApp.fetch = realFetch; uiAvailable = false;
   alerts.length = 0; alerts.push(...savedAlerts);
+}
+
+// Общие листы - слева в постоянном порядке, тёмные; лист нового клиента - сразу после них.
+{
+  const names = () => ss.sheets.map((s) => s.name);
+  ss.sheets.push(ss.sheets.splice(ss.sheets.findIndex((s) => s.name === "Сайты"), 1)[0]); // «Сайты» уехал в конец
+  const cnt = ctx.arrangeSheets(ss);
+  const commons = names().slice(0, cnt);
+  ok("общие листы: «Сайты» первый, все общие подряд слева и тёмные",
+    commons[0] === "Сайты" && commons.includes("Ответы") && ss.sheets.slice(0, cnt).every((s) => s.tab === "#37474f") &&
+    ss.sheets.slice(cnt).every((s) => !s.tab), names().join(" | "));
+  const before = ctx.arrangeSheets(ss);
+  const r = ctx.buildSiteSheet(ss, { "Название бизнеса": ["Новый Клиент"], "Название латиницей / на английском (если есть)": ["New Client Test"] });
+  ok("новый лист клиента - сразу после общих", names()[before] === r, names().join(" | "));
+}
+// Анкета изменилась при обновлении → публикация отдельным запуском через минуту (если подключён Netlify).
+{
+  const n0 = triggers.length, had = props.NETLIFY_TOKEN; props.NETLIFY_TOKEN = "nfp";
+  ok("обновление: анкета изменилась → запуск autoPublishAnketa", ctx.scheduleAnketaPublish() === true && triggers.length === n0 + 1 && triggers[n0].fn === "autoPublishAnketa");
+  ctx.ScriptApp.deleteTrigger(triggers[n0]); if (had === undefined) delete props.NETLIFY_TOKEN; else props.NETLIFY_TOKEN = had;
 }
 
 checks.forEach((c) => console.log((c.pass ? "PASS " : "FAIL ") + c.name + (c.pass ? "" : "  -> " + c.info)));
