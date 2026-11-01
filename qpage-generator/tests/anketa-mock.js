@@ -277,6 +277,20 @@ const answers0 = answers;
   uiAvailable = true; alerts.length = 0; ctx.sendLinkToClient(); uiAvailable = false;
   ok("без выбранного клиента - подсказка", /Откройте лист клиента/.test(alerts[0] || ""), alerts[0]);
   alerts.length = 0; alerts.push(...savedAlerts);
+
+  // --- Бесплатный год: дата при первой публикации, письмо за 30 дней, один раз ---
+  const fCol = sitesNow.cells[0].indexOf("бесплатно до");
+  const inYear = new Date(); inYear.setFullYear(inYear.getFullYear() + 1);
+  const fmt = (d) => String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + d.getFullYear();
+  ok("«бесплатно до» = через год после первой публикации", fCol > 0 && sitesNow.cells[cRow][fCol] === fmt(inYear), sitesNow.cells[cRow][fCol]);
+  const nf = mails.length;
+  ctx.checkHostingEnds();
+  ok("до конца больше 30 дней - писем нет", mails.length === nf);
+  const soon = new Date(); soon.setDate(soon.getDate() + 10);
+  sitesNow.cells[cRow][fCol] = fmt(soon);
+  ctx.checkHostingEnds(); ctx.checkHostingEnds();
+  ok("за 10 дней - одно письмо владельцу (второй раз не пишет)", mails.length === nf + 1 && mails[nf].subj.includes("бесплатный год") &&
+    mails[nf].body.includes("second - до " + fmt(soon)) && mails[nf].body.includes("осталось 10 дн."), JSON.stringify(mails.slice(nf)));
   const nEdit = mails.length;
   post({ edit: r4.key, answers: Object.assign({}, answers, { name: "Вторая студия" }) });
   run("processAnketas");

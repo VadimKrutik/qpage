@@ -96,6 +96,7 @@ function ensureUpdateTrigger() {
 }
 
 function autoUpdateScript() {
+  try { checkHostingEnds(); } catch (e) { Logger.log(e); } // заодно раз в сутки: кончается ли бесплатный год
   var p = PropertiesService.getScriptProperties(), token = p.getProperty("GITHUB_TOKEN");
   if (!token) return;
   var lock = LockService.getScriptLock();

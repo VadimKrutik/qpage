@@ -522,7 +522,9 @@ var HELP_HTML = [
   "<li>На «Сайты»: <b>Открыть сайт</b> - сайт в интернете, <b>Папка</b> и <b>ZIP</b> - файлы на Диске, <b>Фото</b> - фото клиента, ",
   "<b>Netlify</b> - управление сайтом. Колонка <b>«проверить»</b> - что стоит посмотреть (перевод, большие фото, ссылки). О каждой новой анкете вам приходит письмо.</li>",
   "<li>Посмотрели сайт, всё в порядке - стоя на листе клиента (или на его строке в «Сайты»): <b>QPortall → Отправить клиенту ссылку на сайт</b>. ",
-  "В окне - текст для клиента, кнопка письма на его почту и кнопка WhatsApp (там нажмите «Отправить»). Когда отправлено - видно в колонке <b>«ссылка клиенту»</b>.</li></ol>",
+  "В окне - текст для клиента, кнопка письма на его почту и кнопка WhatsApp (там нажмите «Отправить»). Когда отправлено - видно в колонке <b>«ссылка клиенту»</b>.</li>",
+  "<li>Колонка <b>«бесплатно до»</b> - конец бесплатного года размещения (ставится сама при первой публикации, дату можно поправить). ",
+  "За 30 дней до конца придёт письмо.</li></ol>",
   "<h3>3. Поправить сайт</h3><ol>",
   "<li>Откройте лист клиента. Тексты - в колонках <b>ru / he / en</b>, остальное - в колонке <b>«значение»</b>:",
   "<ul><li><b>languages</b> - языки сайта через запятую, первый - основной: <code>ru,he,en</code> (убрать язык - стереть его);</li>",
@@ -916,6 +918,69 @@ function makeSiteFromActiveSheet() {
     (r.notes.length ? "\n\nПроверьте:\n" + r.notes.join("\n") : ""));
 }
 
+// Колонка листа «Сайты» по заголовку; нет - добавляется после последней.
+function sitesCol(list, name) {
+  var head = list.getRange(1, 1, 1, list.getLastColumn()).getDisplayValues()[0];
+  var col = head.indexOf(name) + 1;
+  if (col) return col;
+  var end = head.length;
+  while (end > 0 && !String(head[end - 1]).trim()) end--;
+  col = Math.max(end, SITES_HEADER.length) + 1;
+  list.getRange(1, col, 1, 1).setValues([[name]]).setFontWeight("bold");
+  return col;
+}
+
+// ---------- Бесплатный год размещения ----------
+// Первая публикация в интернете → «бесплатно до» = через год (владелец может поправить дату сам).
+// Каждую ночь (вместе с автообновлением) - письмо владельцу, когда до конца осталось 30 дней или меньше.
+var FREE_COL = "бесплатно до";
+var FREE_WARN_DAYS = 30;
+
+function setFreeUntil(ss, tabName) {
+  var list = sitesSheet(ss);
+  var col = sitesCol(list, FREE_COL);
+  var vals = list.getDataRange().getDisplayValues();
+  for (var i = 1; i < vals.length; i++) {
+    if (vals[i][0] !== tabName) continue;
+    if (String(vals[i][col - 1] || "").trim()) return;
+    var d = new Date(); d.setFullYear(d.getFullYear() + 1);
+    list.getRange(i + 1, col, 1, 1).setNumberFormat("@").setValues([[Utilities.formatDate(d, ss.getSpreadsheetTimeZone(), "dd.MM.yyyy")]]);
+    return;
+  }
+}
+
+function parseDay(s) {
+  var m = String(s || "").trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+}
+
+function checkHostingEnds() {
+  var ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("SHEET_ID"));
+  var list = ss.getSheetByName(SITES_SHEET);
+  if (!list) return "";
+  var vals = list.getDataRange().getDisplayValues();
+  var col = vals[0].indexOf(FREE_COL), paid = vals[0].indexOf("оплачено");
+  if (col === -1) return "";
+  var p = PropertiesService.getScriptProperties(), today = new Date(), lines = [];
+  today.setHours(0, 0, 0, 0);
+  for (var i = 1; i < vals.length; i++) {
+    var tab = vals[i][0], end = parseDay(vals[i][col]);
+    if (!tab || !end) continue;
+    var left = Math.round((end - today) / 86400000);
+    if (left > FREE_WARN_DAYS) continue;
+    var key = "FREE_WARNED:" + tab;
+    if (p.getProperty(key) === vals[i][col]) continue; // по этой дате уже писали
+    p.setProperty(key, vals[i][col]);
+    lines.push(tab + " - до " + vals[i][col] + (left >= 0 ? " (осталось " + left + " дн.)" : " (уже закончился)") +
+      (paid !== -1 && vals[i][paid] ? ", оплачено: " + vals[i][paid] : ""));
+  }
+  if (!lines.length) return "";
+  var body = "Заканчивается бесплатный год размещения:\n\n" + lines.join("\n") +
+    "\n\nДоговоритесь с клиентом о продлении. Новая дата - в колонке «" + FREE_COL + "» на листе «Сайты».\n" + ss.getUrl();
+  MailApp.sendEmail(Session.getEffectiveUser().getEmail(), "QPortall: заканчивается бесплатный год (" + lines.length + ")", body);
+  return body;
+}
+
 // ---------- Ссылка клиенту на готовый сайт: письмо и WhatsApp ----------
 // Владелец проверяет сайт и сам решает, когда отправить клиенту ссылку (QPortall → «Отправить клиенту ссылку на сайт»).
 var SENT_COL = "ссылка клиенту";
@@ -963,14 +1028,7 @@ function clientMessage(info) {
 function markClientSent(tab, how) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var list = sitesSheet(ss);
-  var head = list.getRange(1, 1, 1, list.getLastColumn()).getDisplayValues()[0];
-  var col = head.indexOf(SENT_COL) + 1;
-  if (!col) {
-    var end = head.length;
-    while (end > 0 && !String(head[end - 1]).trim()) end--;
-    col = Math.max(end, SITES_HEADER.length) + 1;
-    list.getRange(1, col, 1, 1).setValues([[SENT_COL]]).setFontWeight("bold");
-  }
+  var col = sitesCol(list, SENT_COL);
   var info = clientInfo(ss, tab);
   if (!info.row) return;
   var cell = list.getRange(info.row, col, 1, 1);
@@ -1105,6 +1163,7 @@ function makeSite(ss, tabName) {
     out.folderUrl, out.zipUrl, notes.join("\n"), r.problems.join("\n"), media.folder.getUrl(),
     out.siteUrl || (pubError ? "не опубликован" : ""), out.adminUrl || ""]]);
   linkify(list, row);
+  if (out.siteUrl) setFreeUntil(ss, tabName);
   return out;
 }
 
@@ -1448,6 +1507,7 @@ function ensureUpdateTrigger() {
 }
 
 function autoUpdateScript() {
+  try { checkHostingEnds(); } catch (e) { Logger.log(e); } // заодно раз в сутки: кончается ли бесплатный год
   var p = PropertiesService.getScriptProperties(), token = p.getProperty("GITHUB_TOKEN");
   if (!token) return;
   var lock = LockService.getScriptLock();

@@ -138,7 +138,7 @@ const ctx = {
     computeDigest: (alg, str) => [...require("crypto").createHash("sha256").update(String(str)).digest()],
     base64Encode: (bytes) => Buffer.from(bytes).toString("base64"),
     DigestAlgorithm: { SHA_256: "SHA_256" }, Charset: { UTF_8: "UTF_8" },
-    formatDate: () => "24.10.2026 15:30" },
+    formatDate: (d, tz, f) => f === "dd.MM.yyyy" ? String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + d.getFullYear() : "24.10.2026 15:30" },
   LanguageApp: { translate(text, from, to) {
     const k = to + "|" + text;
     if (!(k in tr)) { missingTr.push(k); return "[" + to + "] " + text; }
