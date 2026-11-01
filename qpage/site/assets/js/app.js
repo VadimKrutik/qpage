@@ -432,7 +432,8 @@
       "email": c.email ? "mailto:" + c.email : "",
       "email-text": c.email ? "mailto:" + c.email : "",
       "whatsapp": c.whatsapp ? "https://wa.me/" + c.whatsapp : "",
-      "telegram": c.telegram ? "https://t.me/" + c.telegram : ""
+      "telegram": c.telegram ? "https://t.me/" + c.telegram : "",
+      "pay": /^https:\/\//.test(c.pay || "") ? c.pay : ""
     };
     $all("[data-contact]").forEach(function (a) {
       var href = links[a.getAttribute("data-contact")];

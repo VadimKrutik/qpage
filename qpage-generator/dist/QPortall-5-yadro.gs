@@ -282,6 +282,8 @@ var QPageCore = (function () {
     const priceLink = isUrl(v("priceLink")) ? v("priceLink").trim() : "";
     if (String(tx("tagline", main) || v("tagline") || "").length > TAGLINE_MAX) warnings.push("главное предложение длиннее " + TAGLINE_MAX + " знаков - лучше сократить, большой текст - в «Ваш главный текст»");
     if (v("priceLink") && !priceLink) warnings.push("ссылка на прайс не начинается с https:// - кнопки нет: " + v("priceLink"));
+    const payLink = isUrl(v("payLink")) ? v("payLink").trim() : "";
+    if (v("payLink") && !payLink) warnings.push("ссылка на оплату не начинается с https:// - кнопки нет: " + v("payLink"));
     const licenseLink = isUrl(v("licenseLink")) ? v("licenseLink").trim() : "";
     if (v("licenseLink") && !licenseLink) warnings.push("ссылка на документ не начинается с https:// - кнопки нет: " + v("licenseLink"));
     const video = youtubeId(v("video"));
@@ -348,7 +350,8 @@ var QPageCore = (function () {
         phoneDisplay: v("phone"),
         whatsapp: digits(intlPhone(v("whatsapp"))),
         telegram: v("telegram").replace(/^@/, ""),
-        email: v("email")
+        email: v("email"),
+        pay: payLink
       },
       map: { lat: hasCoords ? lat : null, lon: hasCoords ? lon : null, zoom: 16 },
       services: services.map((s) => ({ icon: "check", price: s.price })),
@@ -663,7 +666,8 @@ var QPageCore = (function () {
     const links = {
       "phone": c.phone ? "tel:" + c.phone : "", "phone-text": c.phone ? "tel:" + c.phone : "",
       "email": c.email ? "mailto:" + c.email : "", "email-text": c.email ? "mailto:" + c.email : "",
-      "whatsapp": c.whatsapp ? "https://wa.me/" + c.whatsapp : "", "telegram": c.telegram ? "https://t.me/" + c.telegram : ""
+      "whatsapp": c.whatsapp ? "https://wa.me/" + c.whatsapp : "", "telegram": c.telegram ? "https://t.me/" + c.telegram : "",
+      "pay": /^https:\/\//.test(c.pay || "") ? c.pay : ""
     };
     html = eachTag(html, "data-contact=", (tag) => {
       const href = links[tag.match(/data-contact="([\w-]+)"/)[1]];

@@ -54,7 +54,8 @@ window.QPAGE = {
       phoneDisplay: "+972-50-000-0000", // как показывать
       whatsapp: "972500000000",        // номер без "+" для wa.me; пусто - кнопки нет
       telegram: "",                     // имя пользователя без "@"; пусто - кнопки нет
-      email: "info@example.com"
+      email: "info@example.com",
+      pay: ""                           // ссылка на оплату (https://...); пусто - кнопки «Оплатить» нет
     },
 
     map: {
@@ -153,6 +154,7 @@ window.QPAGE = {
         whatsapp: "WhatsApp",
         telegram: "Telegram",
         email: "Написать письмо",
+        pay: "Оплатить",
         writeUs: "Оставить заявку",
         priceFrom: "от {price}",
         priceOnRequest: "Цена по запросу",
@@ -373,6 +375,7 @@ window.QPAGE = {
         whatsapp: "WhatsApp",
         telegram: "Telegram",
         email: "שלחו מייל",
+        pay: "לתשלום",
         writeUs: "השאירו פנייה",
         priceFrom: "החל מ־{price}",
         priceOnRequest: "המחיר לפי בקשה",
@@ -593,6 +596,7 @@ window.QPAGE = {
         whatsapp: "WhatsApp",
         telegram: "Telegram",
         email: "Send an email",
+        pay: "Pay online",
         writeUs: "Request a callback",
         priceFrom: "from {price}",
         priceOnRequest: "Price on request",

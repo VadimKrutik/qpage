@@ -153,6 +153,8 @@ function questions() {
       help: "Если пусто - кнопки WhatsApp на сайте не будет." },
     { key: "telegram", title: "Telegram — имя пользователя", type: "text", help: "Без @. Если пусто - кнопки не будет." },
     { key: "email", title: "Эл. почта для сайта", type: "text", validate: "email" },
+    { key: "payLink", title: "Ссылка на оплату (если есть)", type: "text", validate: "url", plain: "ссылка на оплату (кнопка «Оплатить»)",
+      help: "Если клиенты могут платить вам по ссылке (Morning, Grow, PayPal и другие): на сайте будет кнопка «Оплатить». Начинается с https://" },
     { key: "workDays", title: "Рабочие дни", type: "checkbox", options: DAYS, plain: "рабочие дни (вс, пн, вт, ср, чт, пт, сб)",
       help: "Отметьте дни, когда вы работаете. Если не отметить - часов работы на сайте не будет." },
     { key: "workFrom", title: "Начало работы", type: "list", options: timeOptions(5, 14) },
