@@ -262,19 +262,22 @@ var QPageCore = (function () {
     const hasCoords = isFinite(lat) && isFinite(lon);
     const hasAddress = langs.every((l) => tx("address", l));
 
-    const services = [];
+    const services = [], warnings0 = [];
     for (let i = 1; i <= MAX_SERVICES; i++) {
       if (!tx("service" + i + "Name", main)) continue;
       // Цена - число («1000») или текст («Включено в стоимость»; переводы в колонках ru/he/en).
       const price = parseFloat(String(v("service" + i + "Price")).replace(",", "."));
-      services.push({ i, price: isFinite(price) ? price : null });
+      // Своя ссылка на оплату у услуги (сумму задаёт владелец в платёжном сервисе, покупатель её не меняет).
+      const pay = /^https:\/\/\S+$/i.test(v("service" + i + "Pay").trim()) ? v("service" + i + "Pay").trim() : "";
+      if (v("service" + i + "Pay") && !pay) warnings0.push("услуга " + i + ": ссылка на оплату не начинается с https:// - кнопки нет");
+      services.push({ i, price: isFinite(price) ? price : null, pay });
     }
     const faq = [];
     for (let i = 1; i <= MAX_FAQ; i++) {
       if (tx("faq" + i + "Q", main) && tx("faq" + i + "A", main)) faq.push(i);
     }
 
-    const warnings = [];
+    const warnings = warnings0;
     // Прайс: строки основного языка задают цены и группы («Стрижки:»), остальные языки - только названия.
     const priceLines = lines(tx("pricelist", main)).slice(0, MAX_LINES);
     // Заголовков разделов в прайсе нет (28.10 Vadim: «Сантехника:» в конце строки только путало клиентов).
@@ -354,7 +357,7 @@ var QPageCore = (function () {
         pay: payLink
       },
       map: { lat: hasCoords ? lat : null, lon: hasCoords ? lon : null, zoom: 16 },
-      services: services.map((s) => ({ icon: "check", price: s.price })),
+      services: services.map((s) => ({ icon: "check", price: s.price, pay: s.pay })),
       gallery: media.photos.map((src, i) => ({ src, price: splitPrice(captionsMain[i]).price })),
       pricelist: { rows: priceRows, link: priceLink },
       credentials: { link: licenseLink, docs: media.docs || [] },
@@ -617,7 +620,9 @@ var QPageCore = (function () {
       if (!x) return "";
       const price = sv.price == null ? x.priceText || t.ui.priceOnRequest : fill(t.ui.priceFrom, { price: money(sv.price, lang) });
       return '<li class="card"><h3 class="dot-item">' + DOT + "<span>" + e(x.name) + "</span></h3><p>" + e(x.text) +
-        '</p><p class="card-price">' + e(price) + "</p></li>";
+        '</p><p class="card-price"><span>' + e(price) + "</span>" +
+        (/^https:\/\//.test(sv.pay || "") ? '<a class="btn btn-secondary card-pay" href="' + e(sv.pay) + '" aria-label="' + e(t.ui.pay + ": " + x.name) + '" target="_blank" rel="noopener noreferrer">' +
+          ICON("card") + "<span>" + e(t.ui.pay) + "</span></a>" : "") + "</p></li>";
     }).join(""));
     const rows = S.pricelist.rows || [];
     const priceHtml = (t.pricelist.items || []).map((it, i) => {

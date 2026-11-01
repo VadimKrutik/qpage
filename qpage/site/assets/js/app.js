@@ -199,7 +199,13 @@
       list.appendChild(el("li", { "class": "card" }, [
         el("h3", { "class": "dot-item" }, [dot(), el("span", { text: tx.name })]),
         el("p", { text: tx.text }),
-        el("p", { "class": "card-price", text: price })
+        el("p", { "class": "card-price" }, [
+          el("span", { text: price }),
+          /^https:\/\//.test(s.pay || "")
+            ? el("a", { "class": "btn btn-secondary card-pay", href: s.pay, "aria-label": t.ui.pay + ": " + tx.name, target: "_blank", rel: "noopener noreferrer" },
+              [icon("card"), el("span", { text: t.ui.pay })])
+            : null
+        ])
       ]));
     });
   }

@@ -329,6 +329,10 @@ if (nMedia) {
     /<ul class="doc-photos" id="credentials-docs"><li><a href="assets\/img\/doc-1\.jpg" target="_blank" rel="noopener"><img src="assets\/img\/doc-1\.jpg" alt="[^"]+ - 1"/.test(html), (html.match(/<ul class="doc-photos"[^]{0,300}/) || [""])[0]);
   ok("ссылка на оплату: в content.js, в контактах кнопка «Оплатить» (новое окно)", content.includes('"pay": "https://pay.example.com/lana"') &&
     /<a class="btn btn-secondary" data-contact="pay" target="_blank" rel="noopener noreferrer" href="https:\/\/pay\.example\.com\/lana">/.test(html));
+  ok("оплата у цены: у услуги 1 своя кнопка «Оплатить» с её ссылкой, у услуги 2 кнопки нет",
+    content.includes('"pay": "https://pay.grow.link/test-manicure"') &&
+    /<p class="card-price"><span>[^<]+<\/span><a class="btn btn-secondary card-pay" href="https:\/\/pay\.grow\.link\/test-manicure" aria-label="[^"]+: Маникюр с покрытием" target="_blank" rel="noopener noreferrer">/.test(html) &&
+    (html.match(/card-pay/g) || []).length === 1, (html.match(/<p class="card-price">[^]{0,300}/) || [""])[0]);
   ok("фото: значок вкладки — логотип клиента", html.includes('<link rel="icon" href="assets/img/logo.png" type="image/png">'));
   const row = ss.getSheetByName("Сайты").cells[1];
   ok("фото: маленькое фото — замечание с размером (640×420 меньше 1200 у главного)", row[4].includes("Главное фото низкого качества. Замените: main.jpg"), row[4]);

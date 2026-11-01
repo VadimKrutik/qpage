@@ -17,6 +17,7 @@
   "service1Name": "Маникюр с покрытием",
   "service1Text": "Аппаратный маникюр и стойкое покрытие гель-лаком.",
   "service1Price": "150",
+  "service1Pay": "https://pay.grow.link/test-manicure",
   "service2Name": "Педикюр",
   "service2Text": "Классический или аппаратный педикюр с покрытием.",
   "service2Price": "180",

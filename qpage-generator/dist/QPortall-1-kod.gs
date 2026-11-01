@@ -171,6 +171,8 @@ function questions() {
     q.push({ key: "service" + i + "Name", title: "Услуга " + i + ": название", type: "text", required: i === 1, t: true });
     q.push({ key: "service" + i + "Text", title: "Услуга " + i + ": описание", type: "paragraph", t: true });
     q.push({ key: "service" + i + "Price", title: "Услуга " + i + ": цена от, ₪", type: "text", validate: "number" });
+    q.push({ key: "service" + i + "Pay", title: "Услуга " + i + ": ссылка на оплату", type: "text", validate: "url",
+      help: i === 1 ? "Если есть: ссылка с суммой этой услуги (Grow, Morning, PayPal). У цены будет кнопка «Оплатить». Начинается с https://" : "" });
   }
   q.push({ section: "Частые вопросы", help: "До " + MAX_FAQ + " вопросов клиентов с ответами: сроки, гарантия, оплата." });
   for (var j = 1; j <= MAX_FAQ; j++) {
@@ -730,6 +732,7 @@ function siteRows(a, keep) {
   add("fridayHours", "часы в пятницу, если другие", hours && a.fridayTo && a.fridayTo !== SAME_AS_USUAL ? a.workFrom + "-" + a.fridayTo : "");
   for (var i = 1; i <= MAX_SERVICES; i++) {
     if (a["service" + i + "Price"]) add("service" + i + "Price", "Услуга " + i + ": цена от, ₪", a["service" + i + "Price"]);
+    if (a["service" + i + "Pay"]) add("service" + i + "Pay", "Услуга " + i + ": ссылка на оплату", a["service" + i + "Pay"]);
   }
 
   return rows;

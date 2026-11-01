@@ -142,9 +142,10 @@
     wantLicense: "Номер лицензии и фото документов.",
     wantVideo: "Одно видео с YouTube, Instagram или TikTok."
   };
-  var SHORT = { Name: "Название", Text: "Описание", Price: "Цена от, ₪", Q: "Вопрос", A: "Ответ" };
+  var PAY_HELP = "Если есть. Ссылка с ценой этой услуги (Grow, Morning, PayPal) - у цены будет кнопка «Оплатить».";
+  var SHORT = { Name: "Название", Text: "Описание", Price: "Цена от, ₪", Pay: "Ссылка на оплату", Q: "Вопрос", A: "Ответ" };
   var GROUPS = {
-    service: { re: /^service(\d+)(Name|Text|Price)$/, parts: ["Name", "Text", "Price"], item: "Услуга", add: "Добавить услугу" },
+    service: { re: /^service(\d+)(Name|Text|Price|Pay)$/, parts: ["Name", "Text", "Price", "Pay"], item: "Услуга", add: "Добавить услугу" },
     faq: { re: /^faq(\d+)(Q|A)$/, parts: ["Q", "A"], item: "Вопрос", add: "Добавить вопрос" }
   };
   var ERR = {
@@ -303,6 +304,7 @@
     return T(LABEL[q.key] || q.title);
   }
   function helpText(q) {
+    if (/^service\d+Pay$/.test(q.key)) return T(PAY_HELP);
     if (/^(service|faq)\d/.test(q.key)) return "";
     if (HELP[q.key] != null) return T(HELP[q.key]);
     return T(q.help || "");
