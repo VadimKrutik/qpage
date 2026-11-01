@@ -302,6 +302,12 @@ const answers0 = answers;
   // --- Пауза отправки: письмо ждёт, после снятия паузы уходит; исправление анкеты письмо не повторяет ---
   uiAvailable = true; alerts.length = 0; ctx.toggleClientPause(); uiAvailable = false;
   ok("пауза включена: окно и пункт меню «снять»", props.CLIENT_PAUSE === "1" && /Пауза включена/.test(alerts[0] || "") && !(alerts[0] || "").includes("—"), alerts[0]);
+  {
+    const cc = sitesNow.cells[0].indexOf("ссылка клиенту") + 1;
+    ok("пауза видна: вкладка «Сайты» красная, заголовок колонки писем красный с заметкой", sitesNow.tab === "#d32f2f" && sitesNow.bg["1:" + cc] === "#ffcdd2" && /ПАУЗА ВКЛЮЧЕНА/.test(sitesNow.notes["1:" + cc]), sitesNow.tab + " " + JSON.stringify(sitesNow.bg));
+    ctx.arrangeSheets(ss);
+    ok("пауза видна и после упорядочивания вкладок", sitesNow.tab === "#d32f2f", sitesNow.tab);
+  }
   const r5 = post({ t: 60000, answers: Object.assign({}, answers, { name: "Третья студия", nameEn: "Third", email: "third@example.com" }), files: {} });
   run("processAnketas");
   const pRow = sitesNow.cells.findIndex((r) => r[0] === "third");
@@ -310,6 +316,7 @@ const answers0 = answers;
   const third = mails.filter((m) => m.to === "third@example.com");
   ok("пауза снята: письмо ушло, отметка «письмо после паузы <дата>»", !props.CLIENT_PAUSE && third.length === 1 && /Отправлено писем клиентам: 1/.test(alerts[0] || "") &&
     /^письмо после паузы \d\d\.\d\d/.test(sitesNow.cells[pRow][cCol]), (alerts[0] || "") + " | " + sitesNow.cells[pRow][cCol]);
+  ok("пауза снята: вкладка снова тёмная, заголовок обычный", sitesNow.tab === "#37474f" && !sitesNow.bg["1:" + (sitesNow.cells[0].indexOf("ссылка клиенту") + 1)], sitesNow.tab);
   post({ edit: r5.key, answers: Object.assign({}, answers, { name: "Третья студия", nameEn: "Third", email: "third@example.com", phone: "052-000-1111" }) });
   run("processAnketas");
   ok("исправление анкеты: письмо «сайт готов» не повторяется", mails.filter((m) => m.to === "third@example.com").length === 1);

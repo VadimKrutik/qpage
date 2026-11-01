@@ -145,7 +145,7 @@ function arrangeSheets(ss) {
   var commons = ss.getSheets().filter(isCommonSheet).sort(function (a, b) { return rank(a) - rank(b) || a.getIndex() - b.getIndex(); });
   var active = ss.getActiveSheet(), moved = false;
   commons.forEach(function (sh, i) {
-    sh.setTabColor(COMMON_TAB_COLOR);
+    sh.setTabColor(sh.getName() === SITES_SHEET && clientPaused() ? PAUSE_TAB_COLOR : COMMON_TAB_COLOR);
     if (sh.getIndex() !== i + 1) { ss.setActiveSheet(sh); ss.moveActiveSheet(i + 1); moved = true; }
   });
   if (moved && active) ss.setActiveSheet(active);

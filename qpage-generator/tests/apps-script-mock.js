@@ -36,7 +36,7 @@ class Sheet {
       // Текст со ссылкой: в ячейке — надпись, адрес — в sh.links.
       setRichTextValue(v) { (sh.cells[r - 1] ||= [])[c - 1] = v.text; (sh.links[r - 1] ||= [])[c - 1] = v.url; return api; },
       getRichTextValue() { const u = (sh.links[r - 1] || [])[c - 1]; return { getLinkUrl: () => u || null }; },
-      setFontWeight() { return api; }, setNumberFormat() { return api; }, setWrap() { return api; }, setFormulas(v) { return api.setValues(v); }
+      setFontWeight() { return api; }, setBackground(b) { (sh.bg ||= {})[r + ":" + c] = b; return api; }, setNote(n) { (sh.notes ||= {})[r + ":" + c] = n; return api; }, setNumberFormat() { return api; }, setWrap() { return api; }, setFormulas(v) { return api.setValues(v); }
     };
     return api;
   }

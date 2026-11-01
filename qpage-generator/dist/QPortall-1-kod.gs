@@ -1104,14 +1104,26 @@ function toggleClientPause() {
   if (!clientPaused()) {
     p.setProperty("CLIENT_PAUSE", "1");
     addMenu();
-    notify("Пауза включена. Письма клиентам о готовом сайте ждут: в колонке «" + SENT_COL + "» - «" + SENT_WAIT + "». " +
+    pauseMark(SpreadsheetApp.getActiveSpreadsheet());
+    notify("Пауза включена (вкладка «Сайты» стала красной). Письма клиентам о готовом сайте ждут: в колонке «" + SENT_COL + "» - «" + SENT_WAIT + "». " +
       "Снять паузу - тот же пункт меню, тогда письма уйдут.");
     return;
   }
   p.deleteProperty("CLIENT_PAUSE");
   var n = sendWaitingClients(SpreadsheetApp.getActiveSpreadsheet());
   addMenu();
+  pauseMark(SpreadsheetApp.getActiveSpreadsheet());
   notify("Пауза снята. " + (n ? "Отправлено писем клиентам: " + n + "." : "Писем в очереди не было.") + " Новые письма уходят сразу.");
+}
+
+// Пауза видна сразу: вкладка «Сайты» красная, заголовок колонки писем - красный с подписью «ПАУЗА» в заметке.
+var PAUSE_TAB_COLOR = "#d32f2f";
+function pauseMark(ss) {
+  var list = sitesSheet(ss), on = clientPaused();
+  list.setTabColor(on ? PAUSE_TAB_COLOR : COMMON_TAB_COLOR);
+  list.getRange(1, sitesCol(list, SENT_COL), 1, 1)
+    .setBackground(on ? "#ffcdd2" : null)
+    .setNote(on ? "ПАУЗА ВКЛЮЧЕНА: письма клиентам ждут. Снять: QPortall → Пауза отправки клиентам." : "");
 }
 
 function sendWaitingClients(ss) {
@@ -1711,7 +1723,7 @@ function arrangeSheets(ss) {
   var commons = ss.getSheets().filter(isCommonSheet).sort(function (a, b) { return rank(a) - rank(b) || a.getIndex() - b.getIndex(); });
   var active = ss.getActiveSheet(), moved = false;
   commons.forEach(function (sh, i) {
-    sh.setTabColor(COMMON_TAB_COLOR);
+    sh.setTabColor(sh.getName() === SITES_SHEET && clientPaused() ? PAUSE_TAB_COLOR : COMMON_TAB_COLOR);
     if (sh.getIndex() !== i + 1) { ss.setActiveSheet(sh); ss.moveActiveSheet(i + 1); moved = true; }
   });
   if (moved && active) ss.setActiveSheet(active);
