@@ -316,6 +316,8 @@ function addMenu() {
       .addItem("Анкеты QPortall: собрать ещё раз (если «ошибка»)", "retryAnketas")
       .addItem("Ссылки: форма, папка с сайтами", "showLinks")
       .addSeparator()
+      .addItem("Обновить скрипт QPortall", "updateScript")
+      .addItem("Подключить обновления (GitHub)", "connectUpdates")
       .addItem("Инструкция", "showHelp");
   }
   menu.addToUi();

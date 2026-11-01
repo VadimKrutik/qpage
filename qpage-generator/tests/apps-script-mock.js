@@ -644,6 +644,61 @@ fs.writeFileSync(outFile, JSON.stringify(site, null, 1));
   ok("вид: строка «внешний вид» в листе клиента", rows.some((r) => r[0] === "design" && /^акцент: Фото-витрина \/ Текстовый блок \/ Классический вариант$/.test(r[1])), JSON.stringify(rows.find((r) => r[0] === "design")));
 }
 
+// Обновление скрипта из GitHub: файлы из одного коммита → Apps Script API, затем новая версия веб-приложения.
+{
+  const distSrc = (f) => fs.readFileSync(path.join(__dirname, "../dist", f), "utf8");
+  const calls = [];
+  let project = [{ name: "appsscript", type: "JSON", source: "{}" }, { name: "Code", type: "SERVER_JS", source: "old" },
+    { name: "shablon", type: "SERVER_JS", source: "old" }, { name: "Shablon2", type: "SERVER_JS", source: distSrc("QPortall-3-shablon2.gs") },
+    { name: "Anketa", type: "SERVER_JS", source: "old" }, { name: "Yadro", type: "SERVER_JS", source: "old" }];
+  let apiOff = false;
+  const realFetch = ctx.UrlFetchApp.fetch;
+  const res = (code, body) => ({ getResponseCode: () => code, getContentText: () => (typeof body === "string" ? body : JSON.stringify(body)) });
+  ctx.UrlFetchApp.fetch = (url, opt) => {
+    opt = opt || {}; calls.push({ url, method: opt.method || "get", body: opt.payload, auth: opt.headers && opt.headers.Authorization });
+    let m;
+    if (/api\.github\.com\/repos\/[^/]+\/qpage\/commits\/main$/.test(url)) return res(200, { sha: "abc123", commit: { committer: { date: "2026-11-01T12:00:00Z" } } });
+    if ((m = /contents\/qpage-generator\/dist\/([^?]+)\?ref=abc123$/.exec(url))) return res(200, distSrc(m[1]));
+    if (/script\.googleapis\.com/.test(url)) {
+      if (apiOff) return res(403, '{"error":{"message":"User has not enabled the Apps Script API"}}');
+      if (/\/content$/.test(url) && (opt.method || "get") === "get") return res(200, { files: JSON.parse(JSON.stringify(project)) });
+      if (/\/content$/.test(url)) { project = JSON.parse(opt.payload).files; return res(200, {}); }
+      if (/\/versions$/.test(url)) return res(200, { versionNumber: 7 });
+      if (/\/deployments\//.test(url)) return res(200, {});
+    }
+    return res(404, "");
+  };
+  ctx.ScriptApp.getScriptId = () => "SCRIPT1";
+  const keep = { gh: props.GITHUB_TOKEN, api: props.ANKETA_API };
+  props.GITHUB_TOKEN = "github_pat_x"; props.ANKETA_API = "https://script.google.com/macros/s/AKfyDEP1/exec";
+  delete props.UPDATE_SHA;
+  const savedAlerts = alerts.slice();
+  uiAvailable = true; alerts.length = 0;
+  ctx.updateScript();
+  const byName = (n) => project.find((f) => f.name.toLowerCase() === n.toLowerCase());
+  ok("обновление: нет файла Stranica в проекте - ничего не записано", /нет файла Stranica[\s\S]*Ничего не изменено/.test(alerts.join()) && !calls.some((c) => c.method === "put"), alerts.join());
+  project.push({ name: "Stranica", type: "SERVER_JS", source: "old" });
+  alerts.length = 0; calls.length = 0;
+  ctx.updateScript();
+  ok("обновление: 6 файлов в проекте, Code и Yadro - из dist, appsscript.json не тронут",
+    project.length === 7 && byName("Code").source === distSrc("QPortall-1-kod.gs") && byName("Yadro").source === distSrc("QPortall-5-yadro.gs") &&
+    byName("Stranica").source === distSrc("QPortall-6-stranica.gs") && byName("appsscript").source === "{}" && project.filter((f) => /^shablon$/i.test(f.name)).length === 1, project.map((f) => f.name).join());
+  const dep = calls.find((c) => /deployments\/AKfyDEP1$/.test(c.url));
+  ok("обновление: веб-приложение анкеты - на новую версию 7", dep && dep.method === "put" && JSON.parse(dep.body).deploymentConfig.versionNumber === 7, JSON.stringify(dep));
+  ok("обновление: ключ GitHub только для GitHub, токен Google - для Apps Script API",
+    calls.every((c) => (/github/.test(c.url) ? c.auth === "Bearer github_pat_x" : c.auth === "Bearer OAUTH")));
+  ok("обновление: окно - что изменено, опубликовать анкету, F5", /Скрипт обновлён[\s\S]*Изменены: [\s\S]*Опубликовать анкету[\s\S]*F5/.test(alerts.join()) && props.UPDATE_SHA === "abc123", alerts.join());
+  alerts.length = 0; calls.length = 0;
+  ctx.updateScript();
+  ok("обновление: второй раз - уже последняя версия, ничего не пишет", /Уже стоит последняя версия/.test(alerts.join()) && !calls.some((c) => c.method !== "get"), alerts.join());
+  delete props.UPDATE_SHA; apiOff = true; alerts.length = 0;
+  ctx.updateScript();
+  ok("обновление: API выключен - ссылка, где включить", /Включите Apps Script API[\s\S]*usersettings/.test(alerts.join()) && !lk.held, alerts.join());
+  props.GITHUB_TOKEN = keep.gh; props.ANKETA_API = keep.api; if (!keep.gh) delete props.GITHUB_TOKEN; if (!keep.api) delete props.ANKETA_API;
+  ctx.UrlFetchApp.fetch = realFetch; uiAvailable = false;
+  alerts.length = 0; alerts.push(...savedAlerts);
+}
+
 checks.forEach((c) => console.log((c.pass ? "PASS " : "FAIL ") + c.name + (c.pass ? "" : "  -> " + c.info)));
 console.log(`\n${checks.filter((c) => c.pass).length}/${checks.length} passed`);
 console.log("Окно после setup():\n" + alerts[0]);

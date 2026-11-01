@@ -1,7 +1,7 @@
 /*
  * Собирает файлы для Google Apps Script (большой файл редактор Apps Script молча не сохраняет;
  * 140 КБ сохранялся, 157 КБ — уже нет, поэтому каждый файл держим меньше ~100 КБ):
- *   dist/QPortall-1-kod.gs      = apps-script/Code.gs                             → файл Code.gs
+ *   dist/QPortall-1-kod.gs      = apps-script/Code.gs + Update.gs                           → файл Code.gs
  *   dist/QPortall-5-yadro.gs    = ядро генератора (core.js)                       → файл Yadro.gs
  *   dist/QPortall-6-stranica.gs = страница анкеты (anketa.js, стили)              → файл Stranica.gs
  *   (28.10: Code.gs с ядром — 144 КБ — редактор молча не сохранил, поэтому ядро отдельно)
@@ -22,7 +22,8 @@ const sb = { window: {} };
 vm.runInNewContext(fs.readFileSync(path.join(tplDir, "assets/js/content.js"), "utf8"), sb);
 
 const date = new Date().toISOString().slice(0, 10);
-const kod = fs.readFileSync(path.join(__dirname, "apps-script/Code.gs"), "utf8");
+const kod = fs.readFileSync(path.join(__dirname, "apps-script/Code.gs"), "utf8") + "\n" +
+  fs.readFileSync(path.join(__dirname, "apps-script/Update.gs"), "utf8");
 const yadro = "// ===================== Ядро генератора (core.js, собрано build-gs.js " + date + ") =====================\n" +
   fs.readFileSync(path.join(__dirname, "core.js"), "utf8");
 // Длинную строку режем на куски по 8000 знаков (каждый — своей строкой файла), не разрывая пары UTF-16.
@@ -40,6 +41,7 @@ const shablon2 = head(2) +
 const dist = path.join(__dirname, "dist");
 fs.mkdirSync(dist, { recursive: true });
 fs.writeFileSync(path.join(dist, "QPortall-1-kod.gs"), kod);
+fs.copyFileSync(path.join(__dirname, "apps-script/appsscript.json"), path.join(dist, "appsscript.json"));
 fs.writeFileSync(path.join(dist, "QPortall-5-yadro.gs"), yadro);
 fs.writeFileSync(path.join(dist, "QPortall-2-shablon.gs"), shablon);
 fs.writeFileSync(path.join(dist, "QPortall-3-shablon2.gs"), shablon2);

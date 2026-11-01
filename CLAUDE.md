@@ -4,3 +4,4 @@
 - Не меняем названия, по которым скрипт находит существующее: папки «QPage — сайты», «<лист> — фото», «Анкеты — входящие» и заголовки вопросов Google Формы («Чем вы занимаетесь — одной строкой», «Telegram — имя пользователя»). У Vadim они уже созданы с длинным тире.
 - Каждый файл dist/*.gs не больше 140 КБ (редактор Apps Script молча не сохраняет большие файлы); build-gs.js это проверяет.
 - После правок: node build-gs.js, тесты (tests/apps-script-mock.js, anketa-mock.js, anketa-e2e.js, design-audit.js), затем dist в C:\ClaudeWork\QPage-generator\dist.
+- Скрипт обновляется сам: меню «QPortall → Обновить скрипт QPortall» берёт dist/*.gs из ветки main (apps-script/Update.gs). Поэтому dist всегда коммитим и пушим в main вместе с исходниками, только рабочую собранную версию. Имена файлов в проекте Apps Script: Code, Shablon, Shablon2, Anketa, Yadro, Stranica.
