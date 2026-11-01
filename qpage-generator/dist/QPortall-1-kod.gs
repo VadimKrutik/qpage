@@ -1321,6 +1321,9 @@ function scriptApi(method, path, body) {
 function updateScript() {
   var p = PropertiesService.getScriptProperties(), token = p.getProperty("GITHUB_TOKEN");
   if (!token) { connectUpdates(); return; }
+  // Google разрешает снять галочку с отдельного права; тогда запрашиваем недостающие права ещё раз (окно Google).
+  if (ScriptApp.requireScopes) ScriptApp.requireScopes(ScriptApp.AuthMode.FULL,
+    ["https://www.googleapis.com/auth/script.projects", "https://www.googleapis.com/auth/script.deployments"]);
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(240000)) throw new Error("QPortall: сейчас собирается сайт. Запустите обновление через пару минут.");
   try { notify(updateScriptNow(p, token)); }
