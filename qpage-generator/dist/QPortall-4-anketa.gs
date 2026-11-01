@@ -316,10 +316,29 @@ function anketaBuild(ss, sh, row) {
       if (it.hasNext()) { var sub = it.next().getFoldersByName(key.slice(0, 12)); if (sub.hasNext()) sub.next().setTrashed(true); } } catch (e) { Logger.log(e); }
     cell(ANKETA_COL.status).setValues([[STATUS_DONE + " " + Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), "dd.MM HH:mm") +
       (r && r.pubError ? " (сайт не опубликован: " + r.pubError + ")" : "")]]);
+    anketaNotify(ss, !vals[ANKETA_COL.tab - 1], answers, tab, key, r);
   } catch (e) {
     Logger.log(e.stack || e);
     cell(ANKETA_COL.status).setValues([[STATUS_ERR + ": " + String(e.message || e).slice(0, 300)]]);
   }
+}
+
+// Письмо владельцу: пришла новая анкета или исправление, сайт собран. Сбой письма сборку не ломает.
+function anketaNotify(ss, isNew, answers, tab, key, r) {
+  try {
+    var url = PropertiesService.getScriptProperties().getProperty("ANKETA_URL");
+    var body = [
+      (isNew ? "Новая анкета: " : "Анкету исправили: ") + (answers.name || tab),
+      answers.phone ? "Телефон: " + answers.phone : "",
+      answers.email ? "Почта: " + answers.email : "",
+      "",
+      r && r.siteUrl ? "Сайт: " + r.siteUrl : "Сайт не опубликован" + (r && r.pubError ? ": " + r.pubError : "") + ".",
+      url ? "Ссылка клиента для исправлений: " + url + "/?edit=" + key : "",
+      "Таблица: " + ss.getUrl() + " (лист «" + tab + "»)"
+    ].filter(function (x, i) { return x || i === 3; }).join("\n");
+    MailApp.sendEmail(Session.getEffectiveUser().getEmail(),
+      "QPortall: " + (isNew ? "новая анкета" : "анкету исправили") + " - " + (answers.name || tab), body);
+  } catch (e) { Logger.log(e); }
 }
 
 // Ответы страницы → как e.namedValues из Google Формы: { "Название вопроса": ["ответ"] }; файлы - ссылками Диска.

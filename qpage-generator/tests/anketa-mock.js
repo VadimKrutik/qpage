@@ -251,6 +251,13 @@ const answers0 = answers;
   ctx.retryAnketas();
   uiAvailable = false;
   ok("«Сайты»: новая строка сразу под последней, а не под пробелом внизу", sites.cells.findIndex((r) => r[0] === "second") === namedRows, sites.cells.findIndex((r) => r[0] === "second") + " / " + namedRows);
+  const m4 = mails.filter((m) => m.subj.includes("новая анкета - Вторая студия"));
+  ok("письмо владельцу о новой анкете: телефон, сайт, ссылка исправлений, лист", m4.length === 1 && m4[0].to === "owner@example.com" &&
+    m4[0].body.includes("Новая анкета: Вторая студия") && m4[0].body.includes("Сайт: ") && m4[0].body.includes("/?edit=" + r4.key) && m4[0].body.includes("лист «second»") && !m4[0].body.includes("—"), JSON.stringify(m4));
+  const nEdit = mails.length;
+  post({ edit: r4.key, answers: Object.assign({}, answers, { name: "Вторая студия" }) });
+  run("processAnketas");
+  ok("письмо владельцу об исправлении анкеты", mails.length === nEdit + 1 && mails[nEdit].subj.includes("анкету исправили") && mails[nEdit].body.startsWith("Анкету исправили"), JSON.stringify(mails.slice(nEdit)));
   ok("«собрать ещё раз»: собрано, лист second", /^готово/.test(row4()[5]) && row4()[1] === "second" && alerts[0].includes("собрано анкет - 1"), row4()[5] + " " + alerts[0]);
 
   // --- Google Форма работает как раньше ---
