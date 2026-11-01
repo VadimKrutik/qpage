@@ -309,8 +309,11 @@ function anketaBuild(ss, sh, row) {
       }
       cell(ANKETA_COL.built).setValues([[JSON.stringify(answers)]]);
       cell(ANKETA_COL.files).setValues([[""]]);
-      r = makeSite(ss, tab);
+      // Письмо клиенту - после того, как на «Сайты» появилась его ссылка для исправлений.
+      CLIENT_MAIL_LATER = true;
+      try { r = makeSite(ss, tab); } finally { CLIENT_MAIL_LATER = false; }
       anketaSitesRow(ss, tab, key, vals[ANKETA_COL.edits - 1], vals[ANKETA_COL.channel - 1]);
+      if (r && r.siteUrl) { try { autoSendClient(ss, tab); } catch (e) { Logger.log("письмо клиенту: " + e); } }
     });
     // Входящие файлы уже скопированы в папку «<лист> - фото».
     try { var it = DriveApp.getFolderById(PropertiesService.getScriptProperties().getProperty("FOLDER_ID")).getFoldersByName("Анкеты — входящие");

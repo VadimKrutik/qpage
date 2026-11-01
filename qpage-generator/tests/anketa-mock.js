@@ -272,6 +272,11 @@ const answers0 = answers;
   const m4 = mails.filter((m) => m.subj.includes("новая анкета - Вторая студия"));
   ok("письмо владельцу о новой анкете: телефон, сайт, ссылка исправлений, лист", m4.length === 1 && m4[0].to === "owner@example.com" &&
     m4[0].body.includes("Новая анкета: Вторая студия") && m4[0].body.includes("Сайт: ") && m4[0].body.includes("/?edit=" + r4.key) && m4[0].body.includes("лист «second»") && !m4[0].body.includes("—"), JSON.stringify(m4));
+  // --- Письмо клиенту уходит само после первой публикации ---
+  const auto = mails.filter((m) => m.to === "client@example.com");
+  const sAuto = ss.getSheetByName("Сайты"), aRow = sAuto.cells.findIndex((r) => r[0] === "second"), aCol = sAuto.cells[0].indexOf("ссылка клиенту");
+  ok("письмо клиенту ушло само сразу после сборки, отметка «письмо само <дата>»", auto.length === 1 && /^Ваш сайт готов/.test(auto[0].subj) &&
+    auto[0].body.includes("/?edit=" + r4.key) && aCol > 0 && /^письмо само \d\d\.\d\d/.test(sAuto.cells[aRow][aCol]), JSON.stringify(auto) + " " + (sAuto.cells[aRow] || [])[aCol]);
   // --- Ссылка клиенту: окно с письмом и WhatsApp, письмо клиенту, отметка на «Сайты» ---
   const savedAlerts = alerts.slice();
   ss.setActiveSheet(ss.getSheetByName("second"));
@@ -288,12 +293,32 @@ const answers0 = answers;
   ok("письмо клиенту: на его почту, тема «Ваш сайт готов», ссылки внутри", mails.length === nm + 1 && cm.to === "client@example.com" &&
     /^Ваш сайт готов/.test(cm.subj) && cm.body.includes(siteLink) && cm.body.includes("/?edit=" + r4.key) && /отправлено/.test(res), JSON.stringify(cm));
   const cCol = sitesNow.cells[0].indexOf("ссылка клиенту");
-  ok("отметка «письмо <дата>» в колонке «ссылка клиенту»", cCol > 0 && /^письмо \d\d\.\d\d/.test(sitesNow.cells[cRow][cCol]), JSON.stringify(sitesNow.cells[0]));
+  ok("повторное письмо дописывается строкой «письмо <дата>»", cCol > 0 && /\nписьмо \d\d\.\d\d/.test(sitesNow.cells[cRow][cCol]), sitesNow.cells[cRow][cCol]);
   ctx.markClientSent("second", "WhatsApp");
   ok("WhatsApp дописывается второй строкой", /\nWhatsApp \d/.test(sitesNow.cells[cRow][cCol]), sitesNow.cells[cRow][cCol]);
   ss.setActiveSheet(sitesNow); sitesNow.activeRow = 1;
   uiAvailable = true; alerts.length = 0; ctx.sendLinkToClient(); uiAvailable = false;
   ok("без выбранного клиента - подсказка", /Откройте лист клиента/.test(alerts[0] || ""), alerts[0]);
+  // --- Пауза отправки: письмо ждёт, после снятия паузы уходит; исправление анкеты письмо не повторяет ---
+  uiAvailable = true; alerts.length = 0; ctx.toggleClientPause(); uiAvailable = false;
+  ok("пауза включена: окно и пункт меню «снять»", props.CLIENT_PAUSE === "1" && /Пауза включена/.test(alerts[0] || "") && !(alerts[0] || "").includes("—"), alerts[0]);
+  const r5 = post({ t: 60000, answers: Object.assign({}, answers, { name: "Третья студия", nameEn: "Third", email: "third@example.com" }), files: {} });
+  run("processAnketas");
+  const pRow = sitesNow.cells.findIndex((r) => r[0] === "third");
+  ok("пауза: письмо третьему клиенту не ушло, отметка «ждёт (пауза)»", pRow > 0 && !mails.some((m) => m.to === "third@example.com") && sitesNow.cells[pRow][cCol] === "ждёт (пауза)", (sitesNow.cells[pRow] || [])[cCol]);
+  uiAvailable = true; alerts.length = 0; ctx.toggleClientPause(); uiAvailable = false;
+  const third = mails.filter((m) => m.to === "third@example.com");
+  ok("пауза снята: письмо ушло, отметка «письмо после паузы <дата>»", !props.CLIENT_PAUSE && third.length === 1 && /Отправлено писем клиентам: 1/.test(alerts[0] || "") &&
+    /^письмо после паузы \d\d\.\d\d/.test(sitesNow.cells[pRow][cCol]), (alerts[0] || "") + " | " + sitesNow.cells[pRow][cCol]);
+  post({ edit: r5.key, answers: Object.assign({}, answers, { name: "Третья студия", nameEn: "Third", email: "third@example.com", phone: "052-000-1111" }) });
+  run("processAnketas");
+  ok("исправление анкеты: письмо «сайт готов» не повторяется", mails.filter((m) => m.to === "third@example.com").length === 1);
+  // Письмо на основном языке сайта: иврит
+  const shT = ss.getSheetByName("third"), lr = shT.cells.findIndex((r) => r[0] === "languages");
+  const keepLang = shT.cells[lr][2]; shT.cells[lr][2] = "he,ru";
+  const heMsg = ctx.clientMessage(ctx.clientInfo(ss, "third"));
+  ok("письмо клиенту с сайтом на иврите - на иврите, ссылка для исправлений с &lang=he", heMsg.startsWith("שלום!") && heMsg.includes("&lang=he") && !heMsg.includes("Здравствуйте"), heMsg);
+  shT.cells[lr][2] = keepLang;
   alerts.length = 0; alerts.push(...savedAlerts);
 
   // --- Бесплатный год: дата при первой публикации, письмо за 30 дней, один раз ---

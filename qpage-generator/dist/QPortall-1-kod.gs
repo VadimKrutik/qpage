@@ -311,6 +311,7 @@ function addMenu() {
   } else {
     menu.addItem("Сделать сайт из этого листа", "makeSiteFromActiveSheet")
       .addItem("Отправить клиенту ссылку на сайт", "sendLinkToClient")
+      .addItem(clientPaused() ? "Пауза отправки клиентам: снять (письма уйдут)" : "Пауза отправки клиентам: включить", "toggleClientPause")
       .addItem("Обработать последний ответ заново", "processLastResponse")
       .addSeparator()
       .addItem("Обновить форму (новые вопросы)", "updateForm")
@@ -521,8 +522,10 @@ var HELP_HTML = [
   "<li>После отправки анкеты сайт собирается сам за 1-2 минуты: новый лист клиента и строка на листе <b>«Сайты»</b>.</li>",
   "<li>На «Сайты»: <b>Открыть сайт</b> - сайт в интернете, <b>Папка</b> и <b>ZIP</b> - файлы на Диске, <b>Фото</b> - фото клиента, ",
   "<b>Netlify</b> - управление сайтом. Колонка <b>«проверить»</b> - что стоит посмотреть (перевод, большие фото, ссылки). О каждой новой анкете вам приходит письмо.</li>",
-  "<li>Посмотрели сайт, всё в порядке - стоя на листе клиента (или на его строке в «Сайты»): <b>QPortall → Отправить клиенту ссылку на сайт</b>. ",
-  "В окне - текст для клиента, кнопка письма на его почту и кнопка WhatsApp (там нажмите «Отправить»). Когда отправлено - видно в колонке <b>«ссылка клиенту»</b>.</li>",
+  "<li>Как только сайт опубликован, клиенту <b>само уходит письмо</b>: ссылка на сайт и ссылка для исправлений. Когда и что ушло - колонка <b>«ссылка клиенту»</b> на «Сайты».</li>",
+  "<li>Хотите сначала смотреть сайты сами: <b>QPortall → Пауза отправки клиентам: включить</b>. Письма ждут («ждёт (пауза)»), а когда снимете паузу тем же пунктом, уйдут все сразу.</li>",
+  "<li>WhatsApp и повторное письмо: стоя на листе клиента (или на его строке в «Сайты») - <b>QPortall → Отправить клиенту ссылку на сайт</b>. ",
+  "В окне - текст для клиента, кнопка письма и кнопка WhatsApp (там нажмите «Отправить»).</li>",
   "<li>Колонка <b>«бесплатно до»</b> - конец бесплатного года размещения (ставится сама при первой публикации, дату можно поправить). ",
   "За 30 дней до конца придёт письмо.</li></ol>",
   "<h3>3. Поправить сайт</h3><ol>",
@@ -990,8 +993,13 @@ function checkHostingEnds() {
 }
 
 // ---------- Ссылка клиенту на готовый сайт: письмо и WhatsApp ----------
-// Владелец проверяет сайт и сам решает, когда отправить клиенту ссылку (QPortall → «Отправить клиенту ссылку на сайт»).
+// Письмо клиенту уходит само, как только сайт впервые опубликован (01.11 решение Vadim). «QPortall → Пауза отправки клиентам»
+// придерживает письма: они ждут в колонке «ссылка клиенту» и уходят, когда пауза снята. Кнопка WhatsApp и повторное
+// письмо - в «QPortall → Отправить клиенту ссылку на сайт» (WhatsApp сам не отправляется: нужен WhatsApp Business API).
 var SENT_COL = "ссылка клиенту";
+var SENT_WAIT = "ждёт (пауза)";
+var CLIENT_MAIL_LATER = false; // своя анкета шлёт письмо сама, когда допишет ссылку для исправлений
+function clientPaused() { return PropertiesService.getScriptProperties().getProperty("CLIENT_PAUSE") === "1"; }
 
 // Лист клиента из активного листа или из выделенной строки «Сайты» (как «Сделать сайт из этого листа»).
 function activeClientTab(ss) {
@@ -1014,7 +1022,10 @@ function clientInfo(ss, tab) {
   var vals = ss.getSheetByName(tab).getDataRange().getDisplayValues();
   var v = {};
   vals.forEach(function (r) { v[r[0]] = String(r[3] || r[2] || "").trim(); });
-  var info = { tab: tab, name: v.name || tab, email: v.email || "", wa: QPageCore.intlPhone(v.whatsapp || v.phone || "").replace(/\D/g, ""),
+  var lang = String((vals.filter(function (r) { return r[0] === "languages"; })[0] || [])[2] || "ru").split(",")[0].trim();
+  if (!CLIENT_TEXT[lang]) lang = "ru";
+  var lc = vals[0].indexOf(lang), nameRow = vals.filter(function (r) { return r[0] === "name"; })[0] || [];
+  var info = { tab: tab, lang: lang, name: (lc > 2 && String(nameRow[lc] || "").trim()) || v.name || tab, email: v.email || "", wa: QPageCore.intlPhone(v.whatsapp || v.phone || "").replace(/\D/g, ""),
     siteUrl: "", editUrl: "", row: 0 };
   var list = sitesSheet(ss);
   var data = list.getDataRange().getDisplayValues();
@@ -1027,22 +1038,87 @@ function clientInfo(ss, tab) {
   return info;
 }
 
+// Письмо клиенту - на основном языке его сайта (первый в «languages»).
+var CLIENT_TEXT = {
+  ru: { hi: "Здравствуйте!", ready: "Ваш сайт «{name}» готов: ", edit: "Если нужно что-то поправить, откройте свою анкету по этой ссылке, исправьте и отправьте. Сайт обновится сам:", subj: "Ваш сайт готов - " },
+  he: { hi: "שלום!", ready: "האתר שלכם «{name}» מוכן: ", edit: "אם צריך לתקן משהו, פתחו את השאלון שלכם בקישור הזה, תקנו ושלחו. האתר יתעדכן לבד:", subj: "האתר שלכם מוכן - " },
+  en: { hi: "Hello!", ready: "Your website «{name}» is ready: ", edit: "If anything needs changing, open your questionnaire with this link, edit it and send. The website will update by itself:", subj: "Your website is ready - " }
+};
 function clientMessage(info) {
-  return "Здравствуйте!\n\nВаш сайт «" + info.name + "» готов: " + info.siteUrl +
-    (info.editUrl ? "\n\nЕсли нужно что-то поправить, откройте свою анкету по этой ссылке, исправьте и отправьте. Сайт обновится сам:\n" + info.editUrl : "") +
-    "\n\nQPortall";
+  var t = CLIENT_TEXT[info.lang] || CLIENT_TEXT.ru;
+  var edit = info.editUrl && info.lang !== "ru" && !/[?&]lang=/.test(info.editUrl) ? info.editUrl + "&lang=" + info.lang : info.editUrl;
+  return t.hi + "\n\n" + t.ready.replace("{name}", info.name) + info.siteUrl +
+    (edit ? "\n\n" + t.edit + "\n" + edit : "") + "\n\nQPortall";
 }
 
-function markClientSent(tab, how) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+function markClientSent(tab, how, ss, replace) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var list = sitesSheet(ss);
   var col = sitesCol(list, SENT_COL);
   var info = clientInfo(ss, tab);
   if (!info.row) return;
   var cell = list.getRange(info.row, col, 1, 1);
   var was = String(cell.getDisplayValue() || "").trim();
-  var now = how + " " + Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), "dd.MM HH:mm");
-  cell.setValues([[was ? was + "\n" + now : now]]);
+  var now = how === SENT_WAIT ? how : how + " " + Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), "dd.MM HH:mm");
+  if (was === SENT_WAIT) was = "";
+  cell.setValues([[was && !replace ? was + "\n" + now : now]]);
+}
+
+// Что стоит в колонке «ссылка клиенту» у листа (пусто - ещё ничего не отправляли).
+function clientSentMark(ss, tab) {
+  var list = sitesSheet(ss);
+  var data = list.getDataRange().getDisplayValues();
+  var col = data[0].indexOf(SENT_COL);
+  if (col === -1) return "";
+  for (var i = 1; i < data.length; i++) if (data[i][0] === tab) return String(data[i][col] || "").trim();
+  return "";
+}
+
+// После первой публикации (makeSite): письмо клиенту сразу или в очередь, если пауза.
+function autoSendClient(ss, tab) {
+  if (clientSentMark(ss, tab)) return;
+  var info = clientInfo(ss, tab);
+  if (!info.siteUrl) return;
+  if (!info.email) { markClientSent(tab, "нет почты, ссылку отправьте сами", ss); return; }
+  if (clientPaused()) { markClientSent(tab, SENT_WAIT, ss); return; }
+  try { mailClient(ss, info, "письмо само"); } catch (e) { markClientSent(tab, "письмо не ушло: " + e.message, ss); }
+}
+
+function mailClient(ss, info, how) {
+  MailApp.sendEmail({ to: info.email, subject: (CLIENT_TEXT[info.lang] || CLIENT_TEXT.ru).subj + info.name, body: clientMessage(info),
+    name: "QPortall", replyTo: Session.getEffectiveUser().getEmail() });
+  markClientSent(info.tab, how, ss);
+}
+
+// Меню: пауза отправки клиентам. Снятие паузы отправляет всё, что ждёт.
+function toggleClientPause() {
+  var p = PropertiesService.getScriptProperties();
+  if (!clientPaused()) {
+    p.setProperty("CLIENT_PAUSE", "1");
+    addMenu();
+    notify("Пауза включена. Письма клиентам о готовом сайте ждут: в колонке «" + SENT_COL + "» - «" + SENT_WAIT + "». " +
+      "Снять паузу - тот же пункт меню, тогда письма уйдут.");
+    return;
+  }
+  p.deleteProperty("CLIENT_PAUSE");
+  var n = sendWaitingClients(SpreadsheetApp.getActiveSpreadsheet());
+  addMenu();
+  notify("Пауза снята. " + (n ? "Отправлено писем клиентам: " + n + "." : "Писем в очереди не было.") + " Новые письма уходят сразу.");
+}
+
+function sendWaitingClients(ss) {
+  if (clientPaused()) return 0;
+  var list = sitesSheet(ss);
+  var data = list.getDataRange().getDisplayValues();
+  var col = data[0].indexOf(SENT_COL), n = 0;
+  if (col === -1) return 0;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][col]).trim() !== SENT_WAIT) continue;
+    var info = clientInfo(ss, data[i][0]);
+    if (!info.email || !info.siteUrl) continue;
+    try { mailClient(ss, info, "письмо после паузы"); n++; } catch (e) { markClientSent(info.tab, "письмо не ушло: " + e.message, ss, true); }
+  }
+  return n;
 }
 
 function sendLinkToClient() {
@@ -1072,9 +1148,7 @@ function sendClientEmail(tab) {
   var info = clientInfo(ss, tab);
   if (!info.email) throw new Error("У клиента нет почты.");
   if (!info.siteUrl) throw new Error("Сайт ещё не опубликован.");
-  MailApp.sendEmail({ to: info.email, subject: "Ваш сайт готов - " + info.name, body: clientMessage(info),
-    name: "QPortall", replyTo: Session.getEffectiveUser().getEmail() });
-  markClientSent(tab, "письмо");
+  mailClient(ss, info, "письмо");
   return "Письмо отправлено на " + info.email + ". Отметка - в колонке «" + SENT_COL + "» на листе «Сайты».";
 }
 
@@ -1171,7 +1245,10 @@ function makeSite(ss, tabName) {
     out.folderUrl, out.zipUrl, notes.join("\n"), r.problems.join("\n"), media.folder.getUrl(),
     out.siteUrl || (pubError ? "не опубликован" : ""), out.adminUrl || ""]]);
   linkify(list, row);
-  if (out.siteUrl) setFreeUntil(ss, tabName);
+  if (out.siteUrl) {
+    setFreeUntil(ss, tabName);
+    if (!CLIENT_MAIL_LATER) { try { autoSendClient(ss, tabName); } catch (e) { Logger.log("письмо клиенту: " + e); } }
+  }
   return out;
 }
 
