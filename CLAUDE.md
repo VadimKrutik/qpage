@@ -5,3 +5,4 @@
 - Каждый файл dist/*.gs не больше 140 КБ (редактор Apps Script молча не сохраняет большие файлы); build-gs.js это проверяет.
 - После правок: node build-gs.js, тесты (tests/apps-script-mock.js, anketa-mock.js, anketa-e2e.js, design-audit.js), затем dist в C:\ClaudeWork\QPage-generator\dist.
 - Скрипт обновляется сам: меню «QPortall → Обновить скрипт QPortall» берёт dist/*.gs из ветки main (apps-script/Update.gs). Поэтому dist всегда коммитим и пушим в main вместе с исходниками, только рабочую собранную версию. Имена файлов в проекте Apps Script: Code, Shablon, Shablon2, Anketa, Yadro, Stranica.
+- Порядок работ - PLAN.md (главная копия - документ по ссылке в нём). Перед каждым шагом сверяться с планом, новое сначала вписывать в план на своё место.
