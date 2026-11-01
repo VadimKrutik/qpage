@@ -55,7 +55,7 @@ const anketa = "// ===================== Анкета QPortall, код (собр
   pageFiles(["_headers"].concat(fs.readdirSync(path.join(ank, "bg")).sort().map((n) => "bg/" + n))) +
   assign("var ANKETA_LOGO_PNG", fs.readFileSync(path.join(ank, "logo.png")).toString("base64"));
 const stranica = "// ===================== Анкета QPortall, страница (собрано build-gs.js " + date + ") =====================\n" + pageHead +
-  pageFiles(["index.html", "anketa.css", "anketa.js"]);
+  pageFiles(["index.html", "anketa.css", "i18n.js", "anketa.js"]);
 fs.writeFileSync(path.join(dist, "QPortall-4-anketa.gs"), anketa);
 fs.writeFileSync(path.join(dist, "QPortall-6-stranica.gs"), stranica);
 if (fs.existsSync(path.join(dist, "QPage.gs"))) fs.unlinkSync(path.join(dist, "QPage.gs"));

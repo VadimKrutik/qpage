@@ -20,6 +20,54 @@
   var app = document.getElementById("app");
   var LINK = C.linkRe ? new RegExp(C.linkRe, "i") : null;
   var SKEY = "qp-anketa:" + (EDIT || "new");
+  // Язык анкеты: ?lang=he|en|ru, иначе выбранный раньше кнопкой RU / עב / EN, иначе русский (при исправлении - язык анкеты).
+  // Переводы - в i18n.js (ключ - русский текст). Ответы всегда сохраняются по-русски (значения вариантов не меняются).
+  var I18N = window.QP_I18N || {};
+  var LANG_NAMES = { ru: "Русский", he: "עברית", en: "English" };
+  var LANG = pickLang();
+  function pickLang() {
+    var p = (params.get("lang") || "").toLowerCase();
+    if (LANG_NAMES[p]) return p;
+    try { var saved = localStorage.getItem("qp-lang"); if (LANG_NAMES[saved]) return saved; } catch (e) { /* нет */ }
+    // По языку телефона не угадываем: у наших клиентов телефон часто на иврите или английском, а пишут они по-русски.
+    return EDIT ? "" : "ru";
+  }
+  function T(text, vars) {
+    var d = I18N[LANG];
+    var out = (d && d[text]) || text;
+    if (vars) out = out.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; });
+    return out;
+  }
+  // Вариант ответа «На каком языке вы заполняете анкету» для языка анкеты (и обратно).
+  function langLabel(code) {
+    var re = { ru: /Рус/i, he: /Иврит|עברית/, en: /English|Англ/i }[code];
+    return ((QK.formLang && QK.formLang.options) || []).filter(function (o) { return re && re.test(o); })[0] || "";
+  }
+  function langOf(label) {
+    for (var c in LANG_NAMES) if (label && langLabel(c) === label) return c;
+    return "";
+  }
+  function applyLang() {
+    var root = document.documentElement;
+    root.lang = LANG || "ru";
+    root.dir = LANG === "he" ? "rtl" : "ltr";
+    document.title = T("Анкета для сайта") + " - QPortall";
+  }
+  function setLang(code) {
+    if (code === LANG) return;
+    var a = state.answers, oldLabel = langLabel(LANG), newLabel = langLabel(code);
+    if (newLabel && (!a.formLang || a.formLang === oldLabel)) a.formLang = newLabel;
+    if (newLabel && Array.isArray(a.languages) && a.languages.length === 1 && a.languages[0] === oldLabel) a.languages = [newLabel];
+    LANG = code;
+    try { localStorage.setItem("qp-lang", code); } catch (e) { /* нет */ }
+    applyLang(); save(); render(false);
+  }
+  function langSwitch() {
+    return h("div", { class: "langs", role: "group", "aria-label": "Язык / שפה / Language" }, Object.keys(LANG_NAMES).map(function (c) {
+      return h("button", { type: "button", class: "lng" + (c === (LANG || "ru") ? " on" : ""), lang: c, "aria-pressed": c === (LANG || "ru") ? "true" : "false",
+        text: { ru: "RU", he: "עב", en: "EN" }[c], "aria-label": LANG_NAMES[c], onclick: function () { setLang(c); } });
+    }));
+  }
 
   // Шаги: по 2-4 вопроса. Вопросы, которых здесь нет (новые в questions()), попадут в шаг «Ещё вопросы».
   var STEP_DEFS = [
@@ -43,7 +91,7 @@
     logo: { title: "Логотип", help: "Если есть. Лучше PNG без фона.", max: 1, minPx: 0 },
     main: { title: "Главное фото", help: "Горизонтальное, лучше 1600 на 900 точек (не меньше 1200 в ширину). Будет крупно вверху сайта.", max: 1, minPx: (C.minPx || {}).main || 1200 },
     portrait: { title: "Ваше фото", help: "Ваше фото вверху сайта.", max: 1, minPx: (C.minPx || {}).portrait || 300 },
-    photos: { title: "Фото работ", help: "До " + (C.maxPhotos || 8) + " фото работ или товаров. Лучше горизонтальные, 1600 на 1200 точек (не меньше 800 в ширину). Порядок - как на сайте.", max: C.maxPhotos || 8, minPx: (C.minPx || {}).photo || 800 },
+    photos: { title: "Фото работ", help: "До {n} фото работ или товаров. Лучше горизонтальные, 1600 на 1200 точек (не меньше 800 в ширину). Порядок - как на сайте.", max: C.maxPhotos || 8, minPx: (C.minPx || {}).photo || 800 },
     docs: { title: "Фото лицензий и дипломов", help: "Закройте на фото номер удостоверения и адрес.", max: (C.maxFiles || {}).docs || 8, minPx: (C.minPx || {}).doc || 600 }
   };
   var DAYS_SHORT = { "Воскресенье": "Вс", "Понедельник": "Пн", "Вторник": "Вт", "Среда": "Ср", "Четверг": "Чт", "Пятница": "Пт", "Суббота": "Сб" };
@@ -250,13 +298,13 @@
   }
   var uid = 0;
   function labelText(q) {
-    for (var g in GROUPS) { var m = q.key.match(GROUPS[g].re); if (m) return SHORT[m[2]]; }
-    return LABEL[q.key] || q.title;
+    for (var g in GROUPS) { var m = q.key.match(GROUPS[g].re); if (m) return T(SHORT[m[2]]); }
+    return T(LABEL[q.key] || q.title);
   }
   function helpText(q) {
     if (/^(service|faq)\d/.test(q.key)) return "";
-    if (HELP[q.key] != null) return HELP[q.key];
-    return q.help || "";
+    if (HELP[q.key] != null) return T(HELP[q.key]);
+    return T(q.help || "");
   }
   function setAnswer(key, v) { state.answers[key] = v; delete errors[key]; save(); }
 
@@ -287,7 +335,7 @@
       return h("div", { class: wrapCls, "data-key": q.key }, h("label", { class: "label", for: id }, labelText(q), req), helpEl, input, errEl);
     }
     if (q.type === "list") {
-      var sel = h("select", { id: id }, h("option", { value: "", text: "-" }), q.options.map(function (o) { return h("option", { value: o, text: o }); }));
+      var sel = h("select", { id: id }, h("option", { value: "", text: "-" }), q.options.map(function (o) { return h("option", { value: o, text: T(o) }); }));
       sel.value = v || "";
       if (describedBy) sel.setAttribute("aria-describedby", describedBy);
       sel.addEventListener("change", function () { setAnswer(q.key, sel.value); clearErr(sel); });
@@ -305,20 +353,20 @@
             setAnswer(q.key, c.label); markOk(opts);
             [].forEach.call(document.querySelectorAll(".sk"), function (sk) { sk.style.setProperty("--c", c.value); });
           }),
-          h("span", null, h("i"), c.label));
+          h("span", null, h("i"), T(c.label)));
       }));
     } else if (q.key === "design" && C.designs) {
       var col = (C.colors || []).filter(function (c) { return c.label === state.answers.color; })[0];
       opts = h("div", { class: "designs" }, C.designs.map(function (d) {
         return h("label", { class: "dz" },
           radio(name, d.label, v === d.label, function () { setAnswer(q.key, d.label); }),
-          h("span", null, sketch(d.key, col && col.value), h("span", { class: "dz-t" }, h("b", { text: d.label }), h("small", { text: DESIGN_TEXT[d.key] || "" }))));
+          h("span", null, sketch(d.key, col && col.value), h("span", { class: "dz-t" }, h("b", { text: T(d.label) }), h("small", { text: T(DESIGN_TEXT[d.key] || "") }))));
       }));
     } else {
       opts = h("div", { class: "opts" + (q.key === "workDays" ? " days" : "") }, q.options.map(function (o) {
-        var short = q.key === "workDays" && DAYS_SHORT[o];
+        var short = q.key === "workDays" && DAYS_SHORT[o] && T(DAYS_SHORT[o]);
         var inp = multi
-          ? h("input", { type: "checkbox", name: name, value: o, checked: arr.indexOf(o) !== -1, "aria-label": short ? o : null })
+          ? h("input", { type: "checkbox", name: name, value: o, checked: arr.indexOf(o) !== -1, "aria-label": short ? T(o) : null })
           : radio(name, o, v === o);
         inp.addEventListener("change", function () {
           if (multi) {
@@ -327,7 +375,7 @@
           } else setAnswer(q.key, o);
           markOk(opts);
         });
-        return h("label", { class: "opt" }, inp, h("span", { title: short ? o : null, "aria-hidden": short ? "true" : null }, short || o));
+        return h("label", { class: "opt" }, inp, h("span", { title: short ? T(o) : null, "aria-hidden": short ? "true" : null }, short || T(o)));
       }));
     }
     var fs = h("fieldset", { class: wrapCls, "data-key": q.key, "aria-describedby": describedBy },
@@ -359,23 +407,23 @@
 
   // Сколько раз ещё можно менять анкету, клиенту не пишем (Vadim: сбивает с толку) - только когда больше нельзя.
   function timesLeft(n) {
-    return (Number(n) || 0) <= 0 ? "Изменить анкету больше нельзя." : "";
+    return (Number(n) || 0) <= 0 ? T("Изменить анкету больше нельзя.") : "";
   }
 
   // ---------- Проверка ----------
   function check(q, v) {
     var empty = Array.isArray(v) ? !v.length : !String(v == null ? "" : v).trim();
-    if (empty) return q.required ? (q.type === "choice" || q.type === "checkbox" || q.type === "list" ? "Выберите вариант" : "Заполните, пожалуйста") : "";
+    if (empty) return q.required ? T(q.type === "choice" || q.type === "checkbox" || q.type === "list" ? "Выберите вариант" : "Заполните, пожалуйста") : "";
     var s = String(v).trim();
-    if (q.validate === "phone" && !(/^\+?[0-9 ()-]{9,20}$/.test(s) && s.replace(/\D/g, "").length >= 9)) return "Только цифры, пробелы, + ( ) и -; от 9 цифр. Например: 050-123-4567";
-    if (q.validate === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s)) return "Проверьте адрес, например: name@example.com";
-    if (q.validate === "url" && !/^https?:\/\/[^\s.]+\.\S+$/.test(s)) return "Нужна ссылка, начинается с https://";
-    if (q.validate === "number" && !/^\d+([.,]\d+)?$/.test(s)) return "Только число, например: 250";
+    if (q.validate === "phone" && !(/^\+?[0-9 ()-]{9,20}$/.test(s) && s.replace(/\D/g, "").length >= 9)) return T("Только цифры, пробелы, + ( ) и -; от 9 цифр. Например: 050-123-4567");
+    if (q.validate === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s)) return T("Проверьте адрес, например: name@example.com");
+    if (q.validate === "url" && !/^https?:\/\/[^\s.]+\.\S+$/.test(s)) return T("Нужна ссылка, начинается с https://");
+    if (q.validate === "number" && !/^\d+([.,]\d+)?$/.test(s)) return T("Только число, например: 250");
     var lines = s.split("\n");
-    if (q.lines && lines.length > q.lines) return "Не больше " + q.lines + " строк";
-    if (q.lineMax && lines.some(function (l) { return l.trim().length > q.lineMax; })) return "Строка длинновата: не больше " + q.lineMax + " знаков";
-    if (q.max && s.length > q.max) return "Слишком длинно: не больше " + q.max + " знаков";
-    if (LINK && q.validate !== "url" && q.validate !== "email" && LINK.test(s)) return "Без ссылок, пожалуйста";
+    if (q.lines && lines.length > q.lines) return T("Не больше {n} строк", { n: q.lines });
+    if (q.lineMax && lines.some(function (l) { return l.trim().length > q.lineMax; })) return T("Строка длинновата: не больше {n} знаков", { n: q.lineMax });
+    if (q.max && s.length > q.max) return T("Слишком длинно: не больше {n} знаков", { n: q.max });
+    if (LINK && q.validate !== "url" && q.validate !== "email" && LINK.test(s)) return T("Без ссылок, пожалуйста");
     return "";
   }
   function validateStep(st) {
@@ -395,17 +443,17 @@
     var input = h("input", { type: "file", id: id, accept: "image/*,.heic,.heif", multiple: u.max > 1 });
     var drop = h("label", { class: "drop", for: id },
       h("span", { html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>' }),
-      h("b", { text: u.max > 1 ? "Выбрать фото" : "Выбрать фото" }),
-      h("small", { text: u.max > 1 ? "Можно несколько сразу" : "Одно фото" }), input);
+      h("b", { text: T("Выбрать фото") }),
+      h("small", { text: T(u.max > 1 ? "Можно несколько сразу" : "Одно фото") }), input);
     var msg = h("span", { class: "err", hidden: true });
     function redraw() {
       list.innerHTML = "";
       files[kind].forEach(function (f, i) {
-        var warn = u.minPx && f.w && f.w < u.minPx ? h("span", { class: "warn", text: "Маленькое фото, может быть нечётким" }) : null;
+        var warn = u.minPx && f.w && f.w < u.minPx ? h("span", { class: "warn", text: T("Маленькое фото, может быть нечётким") }) : null;
         list.appendChild(h("div", { class: "th" },
-          f.url ? h("img", { src: f.url, alt: "" }) : h("span", { class: "noimg", text: f.name || "фото" }),
+          f.url ? h("img", { src: f.url, alt: "" }) : h("span", { class: "noimg", text: f.name || T("фото") }),
           u.max > 1 ? h("span", { class: "num", text: String(i + 1) }) : null,
-          h("button", { type: "button", class: "x", "aria-label": "Убрать фото " + (u.max > 1 ? i + 1 : ""), text: "×", onclick: function () {
+          h("button", { type: "button", class: "x", "aria-label": (T("Убрать фото") + " " + (u.max > 1 ? i + 1 : "")).trim(), text: "×", onclick: function () {
             files[kind].splice(i, 1);
             if (f.id) removed.push(f.id);
             if (f.url && f.blob) URL.revokeObjectURL(f.url);
@@ -413,14 +461,14 @@
           } }), warn));
       });
       drop.hidden = files[kind].length >= u.max && u.max > 1;
-      if (u.max === 1) drop.querySelector("b").textContent = files[kind].length ? "Заменить фото" : "Выбрать фото";
+      if (u.max === 1) drop.querySelector("b").textContent = T(files[kind].length ? "Заменить фото" : "Выбрать фото");
     }
     function add(list0) {
       msg.hidden = true;
       var pick = [].slice.call(list0 || []);
       if (!pick.length) return;
       var room = u.max === 1 ? 1 : u.max - files[kind].length;
-      if (pick.length > room) { msg.textContent = "Можно не больше " + u.max + " фото. Лишние не добавлены."; msg.hidden = false; pick = pick.slice(0, room); }
+      if (pick.length > room) { msg.textContent = T("Можно не больше {n} фото. Лишние не добавлены.", { n: u.max }); msg.hidden = false; pick = pick.slice(0, room); }
       drop.classList.add("busy");
       Promise.all(pick.map(function (f) { return prep(f, kind); })).then(function (ready) {
         ready.forEach(function (r) {
@@ -441,7 +489,7 @@
     drop.addEventListener("drop", function (e) { add(e.dataTransfer && e.dataTransfer.files); });
     redraw();
     return h("div", { class: "field up-" + kind + (u.max === 1 ? " one" : "") },
-      h("span", { class: "label", text: u.title }), h("span", { class: "help", text: u.help }), drop, msg, list);
+      h("span", { class: "label", text: T(u.title) }), h("span", { class: "help", text: T(u.help, { n: u.max }) }), drop, msg, list);
   }
 
   // Фото уменьшаем в браузере (до 1600 точек, логотип до 800): отправка быстрее, сайт легче.
@@ -449,11 +497,11 @@
   function prep(file, kind) {
     var max = kind === "logo" ? 800 : 1600;
     var raw = { kind: kind, name: file.name, type: file.type, blob: file, w: 0, h: 0 };
-    if (file.size > 25 * 1024 * 1024) return Promise.resolve({ error: "Файл больше 25 МБ: " + file.name });
+    if (file.size > 25 * 1024 * 1024) return Promise.resolve({ error: T("Файл больше 25 МБ: {name}", { name: file.name }) });
     if (/svg/.test(file.type) || /\.svg$/i.test(file.name)) return Promise.resolve(raw);
     return decode(file).then(function (img) {
       if (!img) {
-        if (file.size > 8 * 1024 * 1024) return { error: "Не удалось открыть фото: " + file.name + ". Сохраните его как JPG." };
+        if (file.size > 8 * 1024 * 1024) return { error: T("Не удалось открыть фото: {name}. Сохраните его как JPG.", { name: file.name }) };
         return raw;
       }
       var w = img.width, hh = img.height, k = Math.min(1, max / Math.max(w, hh));
@@ -495,22 +543,22 @@
     if (state.step < 0) return intro();
     var st = STEPS[state.step];
     var n = state.step + 1, total = STEPS.length;
-    var title = h("h1", { tabindex: "-1", text: st.title });
+    var title = h("h1", { tabindex: "-1", text: T(st.title) });
     var body = h("div", { class: "step" });
-    if (EDIT && server) body.appendChild(h("p", { class: "banner", text: ("Вы меняете анкету. " + timesLeft(server.editsLeft)).trim() }));
-    if (st.lead) body.appendChild(h("p", { class: "lead", text: st.lead }));
+    if (EDIT && server) body.appendChild(h("p", { class: "banner", text: (T("Вы меняете анкету.") + " " + timesLeft(server.editsLeft)).trim() }));
+    if (st.lead) body.appendChild(h("p", { class: "lead", text: T(st.lead) }));
     if (st.uploads) st.uploads.forEach(function (k) { body.appendChild(uploadBox(k)); });
     st.keys.forEach(function (k) { if (!st.review) body.appendChild(field(QK[k])); });
     if (st.group) body.appendChild(groupBlock(st.group));
     if (st.gates) gateList().forEach(function (g) { body.appendChild(gateBlock(g)); });
     if (st.review) reviewBlock(body, st);
     var nav = h("div", { class: "nav" },
-      h("button", { type: "button", class: "btn btn-ghost", text: "Назад", onclick: back }),
+      h("button", { type: "button", class: "btn btn-ghost", text: T("Назад"), onclick: back }),
       st.review
-        ? h("button", { type: "button", class: "btn btn-main", id: "send", text: EDIT ? "Сохранить исправления" : "Отправить анкету", onclick: submit })
-        : h("button", { type: "button", class: "btn btn-main", text: state.fromReview ? "К проверке" : "Далее", onclick: next }));
-    app.appendChild(h("div", { class: "top" }, logo(), h("span", { class: "count", text: "Шаг " + n + " из " + total })));
-    app.appendChild(h("div", { class: "bar", role: "progressbar", "aria-label": "Заполнено", "aria-valuemin": "0", "aria-valuemax": String(total), "aria-valuenow": String(n) },
+        ? h("button", { type: "button", class: "btn btn-main", id: "send", text: T(EDIT ? "Сохранить исправления" : "Отправить анкету"), onclick: submit })
+        : h("button", { type: "button", class: "btn btn-main", text: T(state.fromReview ? "К проверке" : "Далее"), onclick: next }));
+    app.appendChild(h("div", { class: "top" }, logo(), h("span", { class: "count", text: T("Шаг {n} из {total}", { n: n, total: total }) }), langSwitch()));
+    app.appendChild(h("div", { class: "bar", role: "progressbar", "aria-label": T("Заполнено"), "aria-valuemin": "0", "aria-valuemax": String(total), "aria-valuenow": String(n) },
       h("i", { style: "width:" + Math.round(n / total * 100) + "%" })));
     app.appendChild(title);
     app.appendChild(body);
@@ -525,19 +573,19 @@
 
   function intro() {
     var wrap = h("div", { class: "hero" });
-    app.appendChild(h("div", { class: "top" }, logo()));
+    app.appendChild(h("div", { class: "top" }, logo(), langSwitch()));
     if (EDIT) {
-      wrap.appendChild(h("h1", { text: "Исправить анкету" }));
+      wrap.appendChild(h("h1", { text: T("Исправить анкету") }));
       wrap.appendChild(h("p", { class: "lead", text: (server && server.answers && server.answers.name ? "«" + server.answers.name + "». " : "") +
-        "Поправьте, что нужно, или добавьте фото, и нажмите «Сохранить исправления». Сайт обновится сам." }));
+        T("Поправьте, что нужно, или добавьте фото, и нажмите «Сохранить исправления». Сайт обновится сам.") }));
       if (server && timesLeft(server.editsLeft)) wrap.appendChild(h("ul", { class: "facts" }, h("li", { text: timesLeft(server.editsLeft) })));
-      wrap.appendChild(h("button", { type: "button", class: "btn btn-main", text: "Открыть анкету", onclick: function () { go(STEPS.length - 1); } }));
+      wrap.appendChild(h("button", { type: "button", class: "btn btn-main", text: T("Открыть анкету"), onclick: function () { go(STEPS.length - 1); } }));
     } else {
-      wrap.appendChild(h("h1", { text: "Анкета для сайта" }));
-      wrap.appendChild(h("p", { class: "lead", text: "Ответьте на вопросы о вашем деле, и мы сделаем по ним сайт. Пропустить можно всё, кроме отмеченного звёздочкой." }));
-      wrap.appendChild(h("ul", { class: "facts" }, h("li", { text: "10-15 минут" }), h("li", { text: STEPS.length + " коротких шагов" }), h("li", { text: "Ответы сохраняются сами" })));
+      wrap.appendChild(h("h1", { text: T("Анкета для сайта") }));
+      wrap.appendChild(h("p", { class: "lead", text: T("Ответьте на вопросы о вашем деле, и мы сделаем по ним сайт. Пропустить можно всё, кроме отмеченного звёздочкой.") }));
+      wrap.appendChild(h("ul", { class: "facts" }, h("li", { text: T("10-15 минут") }), h("li", { text: T("{n} коротких шагов", { n: STEPS.length }) }), h("li", { text: T("Ответы сохраняются сами") })));
       var draft = loadDraft();
-      wrap.appendChild(h("button", { type: "button", class: "btn btn-main", text: draft && draft.step > 0 ? "Продолжить" : "Начать", onclick: function () { go(Math.max(0, draft && draft.step > 0 ? draft.step : 0)); } }));
+      wrap.appendChild(h("button", { type: "button", class: "btn btn-main", text: T(draft && draft.step > 0 ? "Продолжить" : "Начать"), onclick: function () { go(Math.max(0, draft && draft.step > 0 ? draft.step : 0)); } }));
     }
     wrap.appendChild(h("label", { class: "hp", "aria-hidden": "true" }, "Сайт компании",
       h("input", { type: "text", tabindex: "-1", autocomplete: "off", name: "company_site", oninput: function (e) { hp = e.target.value; } })));
@@ -550,14 +598,14 @@
     var n = groupShown(g), max = groupMax(g);
     for (var i = 1; i <= n; i++) (function (i) {
       var card = h("div", { class: "item" },
-        h("div", { class: "item-head" }, h("b", { text: G0.item + " " + i }),
-          i > 1 || n > 1 ? h("button", { type: "button", class: "link", text: "Убрать", onclick: function () { removeItem(g, i); } }) : null));
+        h("div", { class: "item-head" }, h("b", { text: T(G0.item) + " " + i }),
+          i > 1 || n > 1 ? h("button", { type: "button", class: "link", text: T("Убрать"), onclick: function () { removeItem(g, i); } }) : null));
       var parts = G0.parts.filter(function (p) { return QK[g + i + p]; }).map(function (p) { return field(QK[g + i + p]); });
       if (g === "service" && parts.length === 3) { card.appendChild(parts[0]); card.appendChild(parts[1]); card.appendChild(h("div", { class: "row" }, parts[2], h("div"))); }
       else parts.forEach(function (x) { card.appendChild(x); });
       wrap.appendChild(card);
     })(i);
-    if (n < max) wrap.appendChild(h("button", { type: "button", class: "add", text: "+ " + G0.add, onclick: function () { state.shown[g] = n + 1; save(); render(false); } }));
+    if (n < max) wrap.appendChild(h("button", { type: "button", class: "add", text: "+ " + T(G0.add), onclick: function () { state.shown[g] = n + 1; save(); render(false); } }));
     return wrap;
   }
   function removeItem(g, i) {
@@ -577,7 +625,7 @@
     var sw = h("input", { type: "checkbox", id: id, role: "switch", checked: on });
     sw.addEventListener("change", function () { setAnswer(g.key, sw.checked ? "Да" : "Нет"); render(false); });
     var box = h("div", { class: "gate" + (on ? " on" : "") },
-      h("label", { class: "switch", for: id }, h("span", null, g.gatePage, helpText(g) ? h("small", { text: helpText(g) }) : null), sw));
+      h("label", { class: "switch", for: id }, h("span", null, T(g.gatePage), helpText(g) ? h("small", { text: helpText(g) }) : null), sw));
     if (on) {
       var body = h("div", { class: "gate-body" });
       Q.forEach(function (q) { if (q.gate === g.key) body.appendChild(field(q)); });
@@ -587,6 +635,11 @@
     return box;
   }
 
+  // В проверке варианты ответа показываем на языке анкеты.
+  function shown(q, v) {
+    if (!q.options) return v;
+    return Array.isArray(v) ? v.map(function (x) { return T(x); }) : v ? T(v) : v;
+  }
   function show(v) {
     if (Array.isArray(v)) return v.join(", ");
     var s = String(v == null ? "" : v).trim();
@@ -597,20 +650,20 @@
       if (s.review) return;
       var dl = h("dl");
       var count = 0;
-      (s.uploads || []).forEach(function (k) { if (files[k].length) { dl.appendChild(h("dt", { text: UP[k].title })); dl.appendChild(h("dd", { text: files[k].length + " фото" })); count++; } });
+      (s.uploads || []).forEach(function (k) { if (files[k].length) { dl.appendChild(h("dt", { text: T(UP[k].title) })); dl.appendChild(h("dd", { text: T("{n} фото", { n: files[k].length }) })); count++; } });
       stepKeys(s).forEach(function (k) {
-        var v = show(state.answers[k]);
-        if (!v || (QK[k].gatePage && v === "Нет")) return;
+        var v = show(shown(QK[k], state.answers[k]));
+        if (!v || (QK[k].gatePage && state.answers[k] === "Нет")) return;
         var q = QK[k], m = k.match(/^(service|faq)(\d+)/);
-        dl.appendChild(h("dt", { text: m ? GROUPS[m[1]].item + " " + m[2] + ": " + labelText(q).toLowerCase() : q.gatePage || labelText(q) }));
+        dl.appendChild(h("dt", { text: m ? T(GROUPS[m[1]].item) + " " + m[2] + ": " + labelText(q).toLowerCase() : q.gatePage ? T(q.gatePage) : labelText(q) }));
         dl.appendChild(h("dd", { text: v }));
         count++;
       });
-      if (s.gates && files.docs.length) { dl.appendChild(h("dt", { text: UP.docs.title })); dl.appendChild(h("dd", { text: files.docs.length + " фото" })); }
+      if (s.gates && files.docs.length) { dl.appendChild(h("dt", { text: T(UP.docs.title) })); dl.appendChild(h("dd", { text: T("{n} фото", { n: files.docs.length }) })); }
       body.appendChild(h("div", { class: "sum" },
-        h("div", { class: "sum-head" }, h("b", { text: s.title }),
-          h("button", { type: "button", class: "link", text: "Изменить", "aria-label": "Изменить: " + s.title, onclick: function () { state.fromReview = true; go(i); } })),
-        count ? dl : h("p", { class: "empty", text: "Пропущено" })));
+        h("div", { class: "sum-head" }, h("b", { text: T(s.title) }),
+          h("button", { type: "button", class: "link", text: T("Изменить"), "aria-label": T("Изменить") + ": " + T(s.title), onclick: function () { state.fromReview = true; go(i); } })),
+        count ? dl : h("p", { class: "empty", text: T("Пропущено") })));
     });
     st.keys.forEach(function (k) { body.appendChild(field(QK[k])); });
     body.appendChild(h("div", { id: "status" }));
@@ -658,11 +711,11 @@
     }
     var btn = document.getElementById("send");
     btn.disabled = true;
-    btn.textContent = "Отправляю…";
+    btn.textContent = T("Отправляю…");
     status.innerHTML = "";
     var bar = h("i");
     status.appendChild(h("div", { class: "progress", "aria-hidden": "true" }, bar));
-    var note = h("p", { class: "note", text: "Отправляю фото и ответы. Не закрывайте страницу." });
+    var note = h("p", { class: "note", text: T("Отправляю фото и ответы. Не закрывайте страницу.") });
     status.appendChild(note);
     var payload = { edit: EDIT, design: GROUP, ref: EDIT ? "" : state.ref, hp: hp, t: Date.now() - state.started, answers: answersToSend(), files: {}, remove: removed };
     var jobs = [];
@@ -695,46 +748,48 @@
     }).catch(function () { fail("net"); });
     function fail(code) {
       btn.disabled = false;
-      btn.textContent = EDIT ? "Сохранить исправления" : "Отправить анкету";
+      btn.textContent = T(EDIT ? "Сохранить исправления" : "Отправить анкету");
       status.innerHTML = "";
-      var a = h("p", { class: "alert", role: "alert", text: ERR[code] || ERR.net });
-      if ((code === "edits" || code === "limit" || code === "closed" || code === "server") && C.contact) a.appendChild(h("span", null, " ", h("a", { href: C.contact, text: "Написать нам" })));
+      var a = h("p", { class: "alert", role: "alert", text: T(ERR[code] || ERR.net) });
+      if ((code === "edits" || code === "limit" || code === "closed" || code === "server") && C.contact) a.appendChild(h("span", null, " ", h("a", { href: C.contact, text: T("Написать нам") })));
       status.appendChild(a);
     }
   }
   function done(r) {
     clearDraft();
-    var link = location.origin + location.pathname.replace(/index\.html$/, "") + "?edit=" + r.key;
+    var link = location.origin + location.pathname.replace(/index\.html$/, "") + "?edit=" + r.key + (LANG && LANG !== "ru" ? "&lang=" + LANG : "");
     app.innerHTML = "";
     app.appendChild(h("div", { class: "top" }, logo()));
-    var input = h("input", { type: "text", readonly: true, value: link, "aria-label": "Ваша ссылка для исправлений", onfocus: function (e) { e.target.select(); } });
-    var copy = h("button", { type: "button", class: "btn", text: "Скопировать", onclick: function () {
+    var input = h("input", { type: "text", readonly: true, value: link, "aria-label": T("Ваша ссылка для исправлений"), onfocus: function (e) { e.target.select(); } });
+    var copy = h("button", { type: "button", class: "btn", text: T("Скопировать"), onclick: function () {
       input.select();
-      var ok = function () { copy.textContent = "Скопировано"; };
+      var ok = function () { copy.textContent = T("Скопировано"); };
       if (navigator.clipboard) navigator.clipboard.writeText(link).then(ok, function () { document.execCommand("copy"); ok(); });
       else { document.execCommand("copy"); ok(); }
     } });
     app.appendChild(h("div", { class: "hero" },
       h("span", { class: "check", html: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><circle cx="32" cy="32" r="29"/><path d="M19 33l9 9 17-19" stroke-linecap="round" stroke-linejoin="round"/></svg>' }),
-      h("h1", { tabindex: "-1", text: EDIT ? "Исправления сохранены" : "Анкета отправлена" }),
-      h("p", { class: "lead", text: EDIT ? "Сайт обновится через несколько минут." : "Спасибо! Мы сделаем сайт и пришлём вам ссылку." }),
+      h("h1", { tabindex: "-1", text: T(EDIT ? "Исправления сохранены" : "Анкета отправлена") }),
+      h("p", { class: "lead", text: T(EDIT ? "Сайт обновится через несколько минут." : "Спасибо! Мы сделаем сайт и пришлём вам ссылку.") }),
       h("div", { style: "text-align:start" },
-        h("b", { text: "Ваша ссылка для исправлений" }),
+        h("b", { text: T("Ваша ссылка для исправлений") }),
         h("div", { class: "keybox" }, input, copy),
-        h("p", { class: "note", text: ("Сохраните её. По ней можно дополнить анкету, например добавить фото. " + timesLeft(r.editsLeft)).trim() }))));
+        h("p", { class: "note", text: (T("Сохраните её. По ней можно дополнить анкету, например добавить фото.") + " " + timesLeft(r.editsLeft)).trim() }))));
     app.querySelector("h1").focus();
     window.scrollTo(0, 0);
   }
 
   // ---------- Начало ----------
   function start() {
-    if (!Q.length) { app.innerHTML = '<p class="loading">Анкета ещё не настроена.</p>'; return; }
+    applyLang();
+    if (!Q.length) { app.innerHTML = '<p class="loading">' + T("Анкета ещё не настроена.") + '</p>'; return; }
     var draft = loadDraft();
     if (EDIT) {
-      app.innerHTML = '<p class="loading">Открываю вашу анкету…</p>';
+      app.innerHTML = '<p class="loading">' + T("Открываю вашу анкету…") + '</p>';
       fetch(C.api + (C.api.indexOf("?") === -1 ? "?" : "&") + "anketa=load&edit=" + encodeURIComponent(EDIT))
         .then(function (r) { return r.json(); })
         .then(function (r) {
+          if (!LANG) { LANG = langOf(r && r.answers && r.answers.formLang) || "ru"; applyLang(); }
           if (!r || !r.ok) { stop(ERR[r && r.error] || ERR.net); return; }
           server = r;
           if (!(r.editsLeft > 0)) { stop(ERR.edits, true); return; }
@@ -744,7 +799,7 @@
           files = filterRemoved(files);
           return loadFiles().then(function () { render(); });
         })
-        .catch(function () { stop(ERR.net); });
+        .catch(function () { if (!LANG) { LANG = "ru"; applyLang(); } stop(ERR.net); });
       return;
     }
     if (draft) {
@@ -762,17 +817,17 @@
   }
   function defaults() {
     var a = state.answers;
-    if (QK.formLang && !a.formLang) a.formLang = QK.formLang.options[0];
-    if (QK.languages && !a.languages) a.languages = [QK.languages.options[0]];
+    if (QK.formLang && !a.formLang) a.formLang = langLabel(LANG) || QK.formLang.options[0];
+    if (QK.languages && !a.languages) a.languages = [a.formLang || QK.languages.options[0]];
     gateList().forEach(function (g) { if (!a[g.key]) a[g.key] = "Нет"; });
     if (QK.a11y && !a.a11y) a.a11y = "Да";
   }
   function stop(text, contact) {
     app.innerHTML = "";
     app.appendChild(h("div", { class: "top" }, logo()));
-    var p = h("p", { class: "lead", text: text });
-    if (contact && C.contact) p.appendChild(h("span", null, " ", h("a", { href: C.contact, text: "Написать нам" })));
-    app.appendChild(h("div", { class: "hero" }, h("h1", { text: "Анкета" }), p));
+    var p = h("p", { class: "lead", text: T(text) });
+    if (contact && C.contact) p.appendChild(h("span", null, " ", h("a", { href: C.contact, text: T("Написать нам") })));
+    app.appendChild(h("div", { class: "hero" }, h("h1", { text: T("Анкета") }), p));
   }
 
   start();

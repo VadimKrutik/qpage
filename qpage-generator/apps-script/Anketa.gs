@@ -77,6 +77,8 @@ var ANKETA_HELP = [
   "<li>Ссылка для клиентов - <b>QPortall → Ссылки</b>. Google Форма остаётся запасной и работает как раньше.</li>",
   "<li>Анкета с другим фоном: лист <b>«Фоны анкеты»</b>, дизайн N = строка N (ссылка …/?d=N). Свой фон - ссылка на картинку в Google Диске; ",
   "после изменения листа - <b>QPortall → Опубликовать анкету QPortall</b>.</li>",
+  "<li>Языки: вверху анкеты кнопки <b>RU / עב / EN</b>. Анкета сразу на иврите - ссылка с <b>&lang=he</b> (…/?lang=he или …/?r=N&lang=he), на английском - <b>&lang=en</b>. ",
+  "Ответы в таблице всегда по-русски, язык клиента - в вопросе «На каком языке вы заполняете анкету».</li>",
   "<li>Ответы - лист <b>«Анкеты QPortall»</b> (статус сборки). «ошибка» - <b>QPortall → Анкеты QPortall: собрать ещё раз</b>.</li>",
   "<li>Правки клиента: на «Сайты» ссылка <b>Исправить анкету</b> (её можно переслать клиенту), сколько правок использовано, ",
   "<b>лимит правок</b> (впишите своё число). Число по умолчанию, лимит новых анкет в день и выключатель - лист <b>«Настройки анкеты»</b>.</li>",
@@ -697,7 +699,7 @@ function anketaDeploy(ss) {
   var configJs = "window.QP_ANKETA = " + JSON.stringify(config) + ";\n";
   // Метка версии у файлов - чтобы браузер не взял старую анкету из кеша.
   var stamp = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
-    configJs.replace(/"version":"\d+"/, "") + files["anketa.js"] + files["anketa.css"], Utilities.Charset.UTF_8)).replace(/[^a-z0-9]/gi, "").slice(0, 10);
+    configJs.replace(/"version":"\d+"/, "") + files["anketa.js"] + files["anketa.css"] + (files["i18n.js"] || ""), Utilities.Charset.UTF_8)).replace(/[^a-z0-9]/gi, "").slice(0, 10);
   files["index.html"] = files["index.html"].replace(/\?v=dev/g, "?v=" + stamp);
   files["config.js"] = configJs;
   var blobs = Object.keys(files).map(function (rel) {

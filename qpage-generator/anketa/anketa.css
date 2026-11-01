@@ -40,7 +40,7 @@ body {
 
 .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .logo { display: block; height: 26px; width: auto; }
-.count { font-size: 14px; color: var(--muted); white-space: nowrap; }
+.count { margin-inline-start: auto; font-size: 14px; color: var(--muted); white-space: nowrap; }
 .bar { height: 4px; border-radius: 4px; background: var(--soft); margin: 14px 0 26px; overflow: hidden; }
 .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 4px; transition: width .3s ease; }
 
@@ -197,7 +197,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
 .progress { height: 6px; background: var(--soft); border-radius: 6px; overflow: hidden; margin: 14px 0 6px; }
 .progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
 .alert { background: var(--error-bg); color: var(--error); border-radius: 12px; padding: 12px 14px; margin: 16px 0 0; font-size: 15px; }
-.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.hp { position: absolute; top: 0; inset-inline-start: 0; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); opacity: 0; pointer-events: none; }
 
 @media (max-width: 600px) {
   .card { width: 100%; margin: 0; border-radius: 0; padding: 18px 16px calc(16px + env(safe-area-inset-bottom)); min-height: 100vh; min-height: 100dvh; box-shadow: none; }
@@ -212,3 +212,19 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--a
   .dz .sk { width: 92px; flex: none; }
   .dz b { margin-top: 0; }
 }
+
+/* Языки анкеты: RU / עב / EN. Иврит - справа налево. */
+.langs { display: flex; gap: 2px; margin-inline-start: 8px; }
+.lng { font: inherit; font-size: 13px; font-weight: 600; min-width: 40px; min-height: 40px; padding: 0 6px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.lng:hover { color: var(--text); background: var(--soft); }
+.lng.on { color: var(--text); background: var(--soft); box-shadow: inset 0 0 0 1.5px var(--line); }
+.lng:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+[dir=rtl] select { background-position: left 16px center; }
+[dir=rtl] .switch input::after { left: auto; right: 3px; }
+[dir=rtl] .switch input:checked::after { transform: translateX(-20px); }
+[dir=rtl] .th .num { left: auto; right: 6px; }
+[dir=rtl] .th .x { right: auto; left: 4px; }
+/* Узкий экран и крупный шрифт: если логотип, «Шаг N из M» и языки не помещаются - языки переносятся вниз, к краю. */
+.top { flex-wrap: wrap; row-gap: 2px; }
+.langs { margin-inline-start: auto; }
+.count + .langs { margin-inline-start: 4px; }

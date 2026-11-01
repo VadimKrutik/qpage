@@ -14,7 +14,7 @@ harness = harness.replace(list, list + ', "QPortall-4-anketa.gs"').replace('"QPo
 const me = fs.readFileSync(__filename, "utf8");
 const tests = me.slice(me.lastIndexOf("/* ===== ПРОВЕРКИ ===== */"));
 const tmp = path.join(os.tmpdir(), "qp-anketa-mock-" + process.pid + ".js");
-fs.writeFileSync(tmp, harness.replace(/__dirname/g, JSON.stringify(__dirname)) + "\n" + tests);
+fs.writeFileSync(tmp, harness.replace(/__dirname/g, JSON.stringify(__dirname)) + "\n" + tests.replace(/__dirname/g, JSON.stringify(__dirname)));
 const sample = path.join(__dirname, "sample");
 process.argv = [process.argv[0], tmp, path.join(sample, "answers.json"), path.join(sample, "translations.json"), path.join(os.tmpdir(), "qp-anketa-out.json")];
 try { require(tmp); } finally { fs.unlinkSync(tmp); }
@@ -67,6 +67,24 @@ const answers0 = answers;
   ok("есть старое развертывание, но адрес не вставлен — всё равно спрашивает адрес (не берёт старое)", alerts.length === 1 && alerts[0].includes("saveAnketaApi") && !props.ANKETA_API, alerts[0]);
   ctx.ScriptApp.getService = () => ({ getUrl: () => null });
   uiAvailable = false;
+  // --- Анкета на трёх языках: у каждого текста есть иврит и английский, без длинного тире ---
+  {
+    const win = {};
+    new Function("window", ctx.ANKETA_PAGE["i18n.js"])(win);
+    const cfg = { questions: ctx.questions().map((q) => Object.assign({}, q, q.gateOf ? { gatePage: q.gateOf.page } : {})), colors: ctx.COLORS,
+      designs: ["showcase", "strict", "classic"].map((k) => ({ key: k, label: ctx.QPageCore.DESIGNS[k].label })) };
+    const need = require(path.join(__dirname, "anketa-i18n-keys.js"))(cfg);
+    ["he", "en"].forEach((l) => {
+      const d = win.QP_I18N[l] || {};
+      const miss = need.concat(l === "he" ? ["English"] : []).filter((k) => !d[k]);
+      ok("анкета " + l + ": все тексты переведены (" + need.length + ")", !miss.length, miss.join(" | "));
+      const dash = Object.keys(d).filter((k) => /\u2014/.test(d[k]));
+      ok("анкета " + l + ": в переводах нет длинного тире", !dash.length, dash.join(" | "));
+      const vars = Object.keys(d).filter((k) => (k.match(/\{\w+\}/g) || []).sort().join() !== (d[k].match(/\{\w+\}/g) || []).sort().join());
+      ok("анкета " + l + ": подстановки {n} на месте", !vars.length, vars.join(" | "));
+    });
+    ok("страница анкеты подключает i18n.js до anketa.js", /i18n\.js\?v=dev[\s\S]*anketa\.js\?v=dev/.test(ctx.ANKETA_PAGE["index.html"]));
+  }
   let err = null;
   try { ctx.saveAnketaApi("https://evil.example/exec"); } catch (e) { err = e.message; }
   ok("чужой адрес веб-приложения не принимается", err && err.includes("script.google.com"), err);
@@ -85,7 +103,7 @@ const answers0 = answers;
   const z = zips[zips.length - 1];
   const names = z ? z.blobs.map((b) => b.name) : [];
   ok("анкета выложена на Netlify (сайт qportall-anketa)", nsite && nsite.deploys.length === 1 && props.ANKETA_URL === nsite.ssl_url && html.includes(nsite.ssl_url), html);
-  ok("в выкладке страница, стили, скрипт, настройки, логотип, заголовки, фон 1", ["index.html", "anketa.css", "anketa.js", "config.js", "logo.png", "_headers", "bg/1.jpg", "bg/1.svg", "bg/5.svg"].every((n) => names.includes(n)) && names.length === 12, names.join());
+  ok("в выкладке страница, стили, переводы, скрипт, настройки, логотип, заголовки, фон 1", ["index.html", "anketa.css", "i18n.js", "anketa.js", "config.js", "logo.png", "_headers", "bg/1.jpg", "bg/1.svg", "bg/5.svg"].every((n) => names.includes(n)) && names.length === 13, names.join());
   const cfgText = String(z.blobs.find((b) => b.name === "config.js").data);
   const cfg = JSON.parse(cfgText.replace(/^window\.QP_ANKETA = /, "").replace(/;\s*$/, ""));
   ok("config.js: адрес веб-приложения, все вопросы анкеты, цвета, варианты вида", cfg.api === "https://script.google.com/macros/s/AKfyc_TEST-1/exec" &&

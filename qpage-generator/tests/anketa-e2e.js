@@ -176,6 +176,69 @@ const ok = (name, cond, info = "") => checks.push({ name, pass: !!cond, info });
   ok("исправление: фото 2 убрано, новое в конце", names() === "photo-01-photo1.jpg,photo-03-photo3.jpg,photo-04-IMG_0004.HEIC,main.jpg,portrait.jpg,doc-01-photo3.jpg,photo-05-photo3.jpg" ||
     names() === "logo.png,photo-01-photo1.jpg,photo-03-photo3.jpg,photo-04-IMG_0004.HEIC,main.jpg,portrait.jpg,doc-01-photo3.jpg,photo-05-photo3.jpg", names());
 
+  // --- Анкета на иврите (?lang=he): справа налево, тексты на иврите, ответы уходят с теми же русскими значениями ---
+  const ctxHe = await browser.newContext({ viewport: { width: 360, height: 780 } });
+  const ph = await ctxHe.newPage();
+  ph.on("pageerror", (e) => errors.push("he: " + e.message));
+  const nh = () => ph.click(".nav .btn-main");
+  await ph.goto(s.url + "?lang=he");
+  ok("иврит: dir=rtl, lang=he, заголовок и кнопка на иврите", (await ph.getAttribute("html", "dir")) === "rtl" && (await ph.getAttribute("html", "lang")) === "he" &&
+    (await ph.textContent("h1")) === "שאלון לאתר" && (await ph.title()).startsWith("שאלון לאתר"));
+  await ph.click("text=להתחיל");
+  ok("иврит: язык анкеты - иврит, сайт - на иврите (выбрано заранее)", (await ph.textContent("h1")) === "שפות" &&
+    await ph.isChecked("input[type=radio][value='Иврит (עברית)']") && await ph.isChecked("input[type=checkbox][value='Иврит (עברית)']") &&
+    (await ph.textContent(".count")) === "שלב 1 מתוך 15", await ph.textContent(".step"));
+  await nh();
+  await nh();
+  ok("иврит: ошибка обязательного поля на иврите", (await ph.textContent(".field.bad .err")) === "נא למלא");
+  await ph.fill("[data-key=name] input", "סטודיו לנה");
+  await ph.fill("[data-key=kind] input", "מניקור ופדיקור באשדוד");
+  await nh();
+  await ph.fill("[data-key=tagline] textarea", "מניקור מוקפד בסטודיו נעים.");
+  await nh(); await nh();
+  await ph.fill("[data-key=phone] input", "050-765-4321");
+  await nh();
+  ok("иврит: дни недели коротко на иврите", (await ph.$$eval(".days .opt span", (e) => e.map((x) => x.textContent).join(" "))) === "א׳ ב׳ ג׳ ד׳ ה׳ ו׳ ש׳");
+  await ph.click(`.days .opt:has-text("ב׳")`);
+  // Переключение на английский посреди анкеты: всё на английском, ответы на месте.
+  await ph.click(".lng[lang=en]");
+  ok("переключение на EN: слева направо, тексты на английском, язык анкеты стал English", (await ph.getAttribute("html", "dir")) === "ltr" && (await ph.textContent("h1")) === "Opening hours" &&
+    (await ph.evaluate(() => JSON.parse(localStorage.getItem("qp-anketa:new")).answers.formLang)) === "English");
+  await ph.click(".lng[lang=he]");
+  for (let i = 0; i < 12 && (await ph.textContent("h1")) !== "עיצוב האתר"; i++) {
+    if ((await ph.textContent("h1")) === "שירותים ומחירים") await ph.fill("[data-key=service1Name] input", "מניקור");
+    await nh();
+  }
+  ok("иврит: шаг «Вид сайта», цвета на иврите", (await ph.textContent("h1")) === "עיצוב האתר" && (await ph.textContent("[data-key=color]")).includes("כחול"), (await ph.textContent("h1")) + " / " + (await ph.textContent(".step")).slice(0, 300));
+  await ph.click(".sw:has-text('כחול')");
+  await ph.click(".dz:has-text('חלון תמונות')");
+  await nh(); await nh();
+  const rv = await ph.textContent(".step");
+  ok("иврит: в проверке варианты ответа на иврите", (await ph.textContent("h1")) === "בדקו ושלחו" && rv.includes("כחול") && rv.includes("חלון תמונות") && rv.includes("שני") && !rv.includes("Синий"), rv.slice(0, 500));
+  await ph.evaluate(() => { const d = JSON.parse(localStorage.getItem("qp-anketa:new")); d.started -= 60000; localStorage.setItem("qp-anketa:new", JSON.stringify(d)); });
+  await ph.reload();
+  await ph.click("text=להמשיך");
+  await ph.click("[data-key=consent] .opt");
+  const nReq = m.requests.length;
+  await ph.click("#send");
+  await ph.waitForSelector("text=השאלון נשלח", { timeout: 20000 });
+  const sentHe = JSON.parse(m.requests[nReq].body).answers;
+  ok("иврит: ответы уходят русскими значениями (язык, цвет, вид, дни, согласие)", sentHe.formLang === "Иврит (עברית)" && sentHe.languages.join() === "Иврит (עברית)" &&
+    sentHe.color === "Синий" && sentHe.design === "Фото-витрина" && sentHe.workDays.join() === "Понедельник" && /^Я согласен/.test(sentHe.consent[0]), JSON.stringify(sentHe));
+  const linkHe = await ph.inputValue(".keybox input");
+  ok("иврит: личная ссылка с &lang=he", /\?edit=[0-9a-f]{40}&lang=he$/.test(linkHe), linkHe);
+  // Ссылка без &lang (например, из письма клиенту) - язык берётся из анкеты.
+  const ph2 = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+  await ph2.goto(linkHe.replace(/&lang=he$/, "").replace(/^https?:\/\/[^/]+\//, s.url));
+  await ph2.waitForSelector(".hero h1");
+  ok("ссылка без &lang: анкета на иврите (язык анкеты клиента)", (await ph2.textContent(".hero h1")) === "תיקון השאלון" && (await ph2.getAttribute("html", "dir")) === "rtl");
+  // На 360 px шапка с RU / עב / EN не вылезает за край.
+  await ph.goto(s.url + "?lang=he");
+  await ph.click(".hero .btn-main");
+  const over = await ph.evaluate(() => [...document.querySelectorAll(".top *")].filter((e) => { const r = e.getBoundingClientRect(); return r.left < 0 || r.right > innerWidth; }).length + (document.documentElement.scrollWidth > innerWidth ? 100 : 0));
+  ok("360 px, иврит: шапка шага (логотип, шаг, языки) в пределах экрана", over === 0, over);
+  await ctxHe.close();
+
   // --- Фон по номеру дизайна ---
   const p3 = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await p3.goto(s.url + "?d=1");

@@ -38,7 +38,13 @@ const FILLED = {
     { name: "1280", viewport: { width: 1280, height: 900 } },
     { name: "1440", viewport: { width: 1440, height: 900 } },
     { name: "pixel7-130", ...devices["Pixel 7"], big: true },
-    { name: "galaxy360-130-d1", viewport: { width: 360, height: 780 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3, big: true, query: "?d=1" }
+    { name: "galaxy360-130-d1", viewport: { width: 360, height: 780 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3, big: true, query: "?d=1" },
+    // Анкета на иврите (справа налево) и на английском.
+    { name: "he-galaxy360-130", viewport: { width: 360, height: 780 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3, big: true, query: "?lang=he" },
+    { name: "he-pixel7-130", ...devices["Pixel 7"], big: true, query: "?lang=he" },
+    { name: "he-1280", viewport: { width: 1280, height: 900 }, query: "?lang=he" },
+    { name: "en-390", viewport: { width: 390, height: 844 }, query: "?lang=en" },
+    { name: "en-pixel7-130", ...devices["Pixel 7"], big: true, query: "?lang=en" }
   ];
   const problems = [];
   for (const cfg of configs) {
@@ -64,22 +70,22 @@ const FILLED = {
     await page.goto(s.url + (cfg.query || ""));
     await page.evaluate((a) => localStorage.setItem("qp-anketa:new", JSON.stringify({ answers: a, step: 0, started: Date.now(), shown: {} })), FILLED);
     await page.reload();
-    await page.waitForTimeout(cfg.query ? 400 : 50);
+    await page.waitForTimeout(/d=/.test(cfg.query || "") ? 400 : 50);
     await page.screenshot({ path: path.join(out, cfg.name + "-00-intro.png") });
     await page.click(".hero .btn-main");
     for (let i = 0; i < 15; i++) {
       const h = await page.textContent("h1");
-      if (h === "Фото") {
+      if (await page.$(".up-logo")) {
         await page.setInputFiles(".up-logo input[type=file]", path.join(media, "logo.png"));
         await page.setInputFiles(".up-main input[type=file]", path.join(media, "photo2.jpg"));
         await page.setInputFiles(".up-portrait input[type=file]", path.join(media, "photo1.jpg"));
         await page.waitForFunction(() => document.querySelectorAll(".th").length === 3);
       }
-      if (h === "Ваши работы" && !(await page.$(".up-photos .th"))) {
+      if ((await page.$(".up-photos")) && !(await page.$(".up-photos .th"))) {
         await page.setInputFiles(".up-photos input[type=file]", ["photo1.jpg", "photo2.jpg", "photo3.jpg", "IMG_0004.HEIC", "photo1.jpg"].map((n) => path.join(media, n)));
         await page.waitForFunction(() => document.querySelectorAll(".up-photos .th").length === 5);
       }
-      if (h === "Что ещё показать" && !(await page.$(".up-docs .th"))) {
+      if ((await page.$(".up-docs")) && !(await page.$(".up-docs .th"))) {
         await page.setInputFiles(".up-docs input[type=file]", path.join(media, "photo3.jpg"));
         await page.waitForSelector(".up-docs .th");
       }
