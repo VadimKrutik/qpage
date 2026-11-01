@@ -1349,7 +1349,9 @@ function updateScriptNow(p, token) {
   var files = scriptApi("get", "/content").files || [], changed = [];
   UPDATE_FILES.forEach(function (f) {
     var name = f[1], have = null;
-    files.forEach(function (x) { if (x.type === "SERVER_JS" && x.name.toLowerCase() === name.toLowerCase()) have = x; });
+    // «Код» - так редактор называет первый файл по-русски; «Yadro.» - лишняя точка в имени.
+    var same = function (n) { n = n.toLowerCase().replace(/\.+$/, ""); return n === name.toLowerCase() || (name === "Code" && n === "код"); };
+    files.forEach(function (x) { if (x.type === "SERVER_JS" && same(x.name)) have = x; });
     if (!have) throw new Error("В проекте нет файла " + name + " (есть: " + files.map(function (x) { return x.name; }).join(", ") +
       "). Ничего не изменено.");
     if (have.source !== fresh[name]) { have.source = fresh[name]; changed.push(have.name); }

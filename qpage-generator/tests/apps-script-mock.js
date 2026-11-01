@@ -648,9 +648,9 @@ fs.writeFileSync(outFile, JSON.stringify(site, null, 1));
 {
   const distSrc = (f) => fs.readFileSync(path.join(__dirname, "../dist", f), "utf8");
   const calls = [];
-  let project = [{ name: "appsscript", type: "JSON", source: "{}" }, { name: "Code", type: "SERVER_JS", source: "old" },
+  let project = [{ name: "appsscript", type: "JSON", source: "{}" }, { name: "Код", type: "SERVER_JS", source: "old" },
     { name: "shablon", type: "SERVER_JS", source: "old" }, { name: "Shablon2", type: "SERVER_JS", source: distSrc("QPortall-3-shablon2.gs") },
-    { name: "Anketa", type: "SERVER_JS", source: "old" }, { name: "Yadro", type: "SERVER_JS", source: "old" }];
+    { name: "Anketa", type: "SERVER_JS", source: "old" }, { name: "Yadro.", type: "SERVER_JS", source: "old" }];
   let apiOff = false;
   const realFetch = ctx.UrlFetchApp.fetch;
   const res = (code, body) => ({ getResponseCode: () => code, getContentText: () => (typeof body === "string" ? body : JSON.stringify(body)) });
@@ -681,7 +681,7 @@ fs.writeFileSync(outFile, JSON.stringify(site, null, 1));
   alerts.length = 0; calls.length = 0;
   ctx.updateScript();
   ok("обновление: 6 файлов в проекте, Code и Yadro - из dist, appsscript.json не тронут",
-    project.length === 7 && byName("Code").source === distSrc("QPortall-1-kod.gs") && byName("Yadro").source === distSrc("QPortall-5-yadro.gs") &&
+    project.length === 7 && byName("Код").source === distSrc("QPortall-1-kod.gs") && byName("Yadro.").source === distSrc("QPortall-5-yadro.gs") &&
     byName("Stranica").source === distSrc("QPortall-6-stranica.gs") && byName("appsscript").source === "{}" && project.filter((f) => /^shablon$/i.test(f.name)).length === 1, project.map((f) => f.name).join());
   const dep = calls.find((c) => /deployments\/AKfyDEP1$/.test(c.url));
   ok("обновление: веб-приложение анкеты - на новую версию 7", dep && dep.method === "put" && JSON.parse(dep.body).deploymentConfig.versionNumber === 7, JSON.stringify(dep));
