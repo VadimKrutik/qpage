@@ -155,6 +155,8 @@ function questions() {
     { key: "email", title: "Эл. почта для сайта", type: "text", validate: "email" },
     { key: "payLink", title: "Ссылка на оплату (если есть)", type: "text", validate: "url", plain: "ссылка на оплату (кнопка «Оплатить»)",
       help: "Если клиенты могут платить вам по ссылке (Morning, Grow, PayPal и другие): на сайте будет кнопка «Оплатить». Начинается с https://" },
+    { key: "domain", title: "Свой домен (если уже есть)", type: "text", validate: "domain", plain: "свой домен (например studio-lana.co.il)",
+      help: "Если вы уже купили адрес сайта, например studio-lana.co.il. Мы подключим его и пришлём, что сделать у регистратора. Нет домена - пропустите." },
     { key: "workDays", title: "Рабочие дни", type: "checkbox", options: DAYS, plain: "рабочие дни (вс, пн, вт, ср, чт, пт, сб)",
       help: "Отметьте дни, когда вы работаете. Если не отметить - часов работы на сайте не будет." },
     { key: "workFrom", title: "Начало работы", type: "list", options: timeOptions(5, 14) },
@@ -494,6 +496,10 @@ function validation(kind) {
   if (kind === "hours") {
     return FormApp.createTextValidation().requireTextMatchesPattern("^\\s*\\d{1,2}([:.]\\d{2})?\\s*[-–—]\\s*\\d{1,2}([:.]\\d{2})?\\s*$")
       .setHelpText("По образцу: 8:00-19:00").build();
+  }
+  if (kind === "domain") {
+    return FormApp.createTextValidation().requireTextMatchesPattern("^\\s*(https?://)?(www\\.)?[A-Za-z0-9.-]+\\.[A-Za-z]{2,24}/?\\s*$")
+      .setHelpText("Только адрес, например: studio-lana.co.il").build();
   }
   if (kind === "url") {
     return FormApp.createTextValidation().requireTextIsUrl()
@@ -1051,15 +1057,20 @@ function clientInfo(ss, tab) {
 
 // Письмо клиенту - на основном языке его сайта (первый в «languages»).
 var CLIENT_TEXT = {
-  ru: { hi: "Здравствуйте!", ready: "Ваш сайт «{name}» готов: ", edit: "Если нужно что-то поправить, откройте свою анкету по этой ссылке, исправьте и отправьте. Сайт обновится сам:", subj: "Ваш сайт готов - " },
-  he: { hi: "שלום!", ready: "האתר שלכם «{name}» מוכן: ", edit: "אם צריך לתקן משהו, פתחו את השאלון שלכם בקישור הזה, תקנו ושלחו. האתר יתעדכן לבד:", subj: "האתר שלכם מוכן - " },
-  en: { hi: "Hello!", ready: "Your website «{name}» is ready: ", edit: "If anything needs changing, open your questionnaire with this link, edit it and send. The website will update by itself:", subj: "Your website is ready - " }
+  ru: { hi: "Здравствуйте!", ready: "Ваш сайт «{name}» готов: ",
+    dns: "Чтобы сайт открывался по адресу {domain}, там, где вы купили домен (у регистратора), добавьте две записи DNS:\nA, имя @, значение {ip}\nCNAME, имя www, значение {host}\nМы проверяем их каждую ночь и напишем, когда сайт откроется по вашему адресу.", edit: "Если нужно что-то поправить, откройте свою анкету по этой ссылке, исправьте и отправьте. Сайт обновится сам:", subj: "Ваш сайт готов - " },
+  he: { hi: "שלום!", ready: "האתר שלכם «{name}» מוכן: ",
+    dns: "כדי שהאתר ייפתח בכתובת {domain}, הוסיפו שתי רשומות DNS אצל החברה שבה קניתם את הדומיין:\nA, שם @, ערך {ip}\nCNAME, שם www, ערך {host}\nאנחנו בודקים כל לילה ונכתוב לכם כשהאתר ייפתח בכתובת שלכם.", edit: "אם צריך לתקן משהו, פתחו את השאלון שלכם בקישור הזה, תקנו ושלחו. האתר יתעדכן לבד:", subj: "האתר שלכם מוכן - " },
+  en: { hi: "Hello!", ready: "Your website «{name}» is ready: ",
+    dns: "To open the website at {domain}, add two DNS records where you bought the domain (registrar):\nA, name @, value {ip}\nCNAME, name www, value {host}\nWe check them every night and will write to you when the website opens at your address.", edit: "If anything needs changing, open your questionnaire with this link, edit it and send. The website will update by itself:", subj: "Your website is ready - " }
 };
 function clientMessage(info) {
   var t = CLIENT_TEXT[info.lang] || CLIENT_TEXT.ru;
   var edit = info.editUrl && info.lang !== "ru" && !/[?&]lang=/.test(info.editUrl) ? info.editUrl + "&lang=" + info.lang : info.editUrl;
+  var wait = String(PropertiesService.getScriptProperties().getProperty("DOMAIN_WAIT:" + info.tab) || "").split("|");
+  var dns = wait[1] ? t.dns.replace("{domain}", wait[0]).replace("{ip}", NETLIFY_LB_IP).replace("{host}", wait[1]) : "";
   return t.hi + "\n\n" + t.ready.replace("{name}", info.name) + info.siteUrl +
-    (edit ? "\n\n" + t.edit + "\n" + edit : "") + "\n\nQPortall";
+    (dns ? "\n\n" + dns : "") + (edit ? "\n\n" + t.edit + "\n" + edit : "") + "\n\nQPortall";
 }
 
 function markClientSent(tab, how, ss, replace) {
@@ -1209,32 +1220,110 @@ function clientDomain() {
     if (ans.getSelectedButton() !== ui.Button.OK) return;
     domain = cleanDomain(ans.getResponseText());
     if (!validDomain(domain)) { notify("Это не похоже на домен: «" + ans.getResponseText() + "». Пример: studio-lana.co.il"); return; }
-    try { site = netlify("patch", "/sites/" + site.id, { custom_domain: domain, domain_aliases: ["www." + domain] }); }
-    catch (e) { notify(e.status === 422 ? "Netlify не принял домен «" + domain + "»: он уже подключён к другому сайту." : "Netlify: " + e.message); return; }
+    try { site = connectDomain(site, domain); } catch (e) { notify(e.message); return; }
   }
   notify(domainReport(ss, tab, site, domain));
 }
 
-// Окно: какие записи сделать у регистратора и видны ли они уже. Если видны - просим Netlify выпустить https.
-function domainReport(ss, tab, site, domain) {
+// Состояние домена: видны ли записи DNS; если хоть одна видна - просим Netlify выпустить https.
+// Пока не «готово», в свойстве DOMAIN_WAIT:<лист> - «домен|сайт.netlify.app»: сайт и письма идут с адресом netlify.app,
+// ночная проверка (checkDomains) смотрит записи снова.
+function domainCheck(ss, tab, site, domain) {
   var host = site.name + ".netlify.app";
   var a = dnsLookup(domain, "A"), www = dnsLookup("www." + domain, "CNAME");
   var aOk = a.length > 0 && a.every(function (ip) { return ip === NETLIFY_LB_IP; });
   var wOk = www.indexOf(host) !== -1;
-  var https = "";
+  var https = "", httpsOk = false;
   if (aOk || wOk) {
-    try { netlify("post", "/sites/" + site.id + "/ssl"); https = "https включается (до часа)."; }
+    try { netlify("post", "/sites/" + site.id + "/ssl"); https = "https включается (до часа)."; httpsOk = true; }
     catch (e) { https = e.status === 422 ? "https будет готов, когда записи разойдутся по интернету (до суток). Откройте этот пункт позже." : "https: " + e.message; }
   }
-  var status = aOk && wOk ? "готово" : aOk || wOk ? "частично" : "ждёт записей DNS";
+  var ready = aOk && wOk && httpsOk;
+  var status = ready ? "готово" : aOk || wOk ? "частично" : "ждёт записей DNS";
+  var props = PropertiesService.getScriptProperties();
+  if (ready) props.deleteProperty("DOMAIN_WAIT:" + tab); else props.setProperty("DOMAIN_WAIT:" + tab, domain + "|" + host);
   var list = sitesSheet(ss), info = clientInfo(ss, tab);
   if (info.row) list.getRange(info.row, sitesCol(list, DOMAIN_COL), 1, 1).setValues([[domain + " - " + status]]);
+  return { host: host, a: a, www: www, aOk: aOk, wOk: wOk, https: https, ready: ready, status: status };
+}
+
+// Подключить домен к сайту в Netlify (сам домен и www). Возвращает обновлённый сайт.
+function connectDomain(site, domain) {
+  try { return netlify("patch", "/sites/" + site.id, { custom_domain: domain, domain_aliases: ["www." + domain] }); }
+  catch (e) { throw new Error(e.status === 422 ? "Netlify не принял домен «" + domain + "»: он уже подключён к другому сайту." : "Netlify: " + e.message); }
+}
+
+// Адрес сайта: свой домен, когда он заработал; пока ждём записей DNS - адрес на netlify.app.
+function siteAddress(tab, site) {
+  var d = cleanDomain(site.custom_domain);
+  if (d && !PropertiesService.getScriptProperties().getProperty("DOMAIN_WAIT:" + tab)) return site.ssl_url || "https://" + d;
+  return "https://" + site.name + ".netlify.app";
+}
+
+// Окно: какие записи сделать у регистратора и видны ли они уже.
+function domainReport(ss, tab, site, domain) {
+  var c = domainCheck(ss, tab, site, domain);
   return "Домен " + domain + " подключён к сайту «" + tab + "» в Netlify.\n\n" +
     "У регистратора домена нужны две записи DNS:\n" +
-    "1) A, имя @ (сам домен), значение " + NETLIFY_LB_IP + " - " + (aOk ? "есть" : a.length ? "сейчас другая: " + a.join(", ") : "пока нет") + "\n" +
-    "2) CNAME, имя www, значение " + host + " - " + (wOk ? "есть" : www.length ? "сейчас другая: " + www.join(", ") : "пока нет") + "\n\n" +
-    (aOk && wOk ? "Записи на месте. " + https + " Сайт будет открываться по адресу https://" + domain + "\nКогда https заработает, нажмите «Сделать сайт из этого листа»: в сайт попадёт новый адрес (для Google и превью ссылок)." :
-      "Записи появляются через 10-60 минут после того, как их сделали. Потом снова откройте «QPortall → Свой домен для сайта клиента»." + (https ? " " + https : ""));
+    "1) A, имя @ (сам домен), значение " + NETLIFY_LB_IP + " - " + (c.aOk ? "есть" : c.a.length ? "сейчас другая: " + c.a.join(", ") : "пока нет") + "\n" +
+    "2) CNAME, имя www, значение " + c.host + " - " + (c.wOk ? "есть" : c.www.length ? "сейчас другая: " + c.www.join(", ") : "пока нет") + "\n\n" +
+    (c.aOk && c.wOk ? "Записи на месте. " + c.https + " Сайт будет открываться по адресу https://" + domain + "\nКогда https заработает, нажмите «Сделать сайт из этого листа»: в сайт попадёт новый адрес (для Google и превью ссылок)." :
+      "Записи появляются через 10-60 минут после того, как их сделали. Каждую ночь скрипт проверяет их сам; можно и снова открыть «QPortall → Свой домен для сайта клиента»." + (c.https ? " " + c.https : ""));
+}
+
+// Ночью: домены, которые ждут записей DNS. Заработал - пересобрать сайт с новым адресом и написать клиенту.
+function checkDomains() {
+  var props = PropertiesService.getScriptProperties();
+  if (!props.getProperty("NETLIFY_TOKEN")) return [];
+  var ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(props.getProperty("SHEET_ID") || "");
+  var done = [];
+  Object.keys(props.getProperties()).forEach(function (k) {
+    if (k.indexOf("DOMAIN_WAIT:") !== 0) return;
+    var tab = k.slice(12), id = props.getProperty("NETLIFY_SITE:" + tab);
+    if (!id || !ss.getSheetByName(tab)) { props.deleteProperty(k); return; }
+    try {
+      var site = netlify("get", "/sites/" + id), domain = cleanDomain(site.custom_domain);
+      if (!domain) { props.deleteProperty(k); return; }
+      if (domainCheck(ss, tab, site, domain).ready) done.push(tab);
+    } catch (e) { Logger.log("домен " + tab + ": " + e); }
+  });
+  if (done.length) {
+    props.setProperty("DOMAIN_REBUILD", done.join("\n"));
+    ScriptApp.newTrigger("rebuildDomainSites").timeBased().after(2 * 60 * 1000).create();
+  }
+  return done;
+}
+
+// Отдельный запуск (сборка долгая): пересобрать сайты, у которых заработал свой домен, и сообщить клиенту.
+var DOMAIN_TEXT = {
+  ru: { subj: "Ваш сайт открывается по вашему адресу - ", body: "Здравствуйте!\n\nВаш сайт «{name}» теперь открывается по адресу {url}\n\nQPortall" },
+  he: { subj: "האתר שלכם עובד בכתובת שלכם - ", body: "שלום!\n\nהאתר שלכם «{name}» זמין עכשיו בכתובת {url}\n\nQPortall" },
+  en: { subj: "Your website now opens at your address - ", body: "Hello!\n\nYour website «{name}» now opens at {url}\n\nQPortall" }
+};
+function rebuildDomainSites() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === "rebuildDomainSites") ScriptApp.deleteTrigger(t); });
+  var props = PropertiesService.getScriptProperties();
+  var tabs = String(props.getProperty("DOMAIN_REBUILD") || "").split("\n").filter(String);
+  props.deleteProperty("DOMAIN_REBUILD");
+  var ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(props.getProperty("SHEET_ID") || "");
+  var report = [];
+  tabs.forEach(function (tab) {
+    try {
+      var out = makeSite(ss, tab);
+      var info = clientInfo(ss, tab), t = DOMAIN_TEXT[info.lang] || DOMAIN_TEXT.ru;
+      var sent = "";
+      if (info.email && out.siteUrl && !clientPaused()) {
+        MailApp.sendEmail({ to: info.email, subject: t.subj + info.name, body: t.body.replace("{name}", info.name).replace("{url}", out.siteUrl),
+          name: "QPortall", replyTo: Session.getEffectiveUser().getEmail() });
+        markClientSent(tab, "письмо о домене", ss);
+        sent = ", клиенту написали";
+      }
+      report.push(tab + ": " + (out.siteUrl || "не опубликован") + sent);
+    } catch (e) { report.push(tab + ": ошибка " + e.message); }
+  });
+  if (report.length) {
+    try { MailApp.sendEmail(Session.getEffectiveUser().getEmail(), "QPortall: свой домен заработал", report.join("\n")); } catch (e) { Logger.log(report.join("\n")); }
+  }
 }
 
 var MIME = { html: "text/html", css: "text/css", js: "application/javascript", svg: "image/svg+xml", xml: "application/xml" };
@@ -1256,11 +1345,23 @@ function makeSite(ss, tabName) {
   if (!fields.madeByUrl) fields.madeByUrl = { value: orderUrl() };
   // Адрес сайта в интернете нужен ещё до сборки: по нему карта сайта (sitemap.xml), canonical и превью ссылок.
   // Поэтому сайт на Netlify берём (или создаём) заранее. Свой адрес можно задать строкой siteUrl в листе.
-  var nsite = null, pubError = "";
+  var nsite = null, pubError = "", domainNote = "", domainNew = "";
   if (PropertiesService.getScriptProperties().getProperty("NETLIFY_TOKEN")) {
     try {
       nsite = netlifySite(tabName);
-      if (!fields.siteUrl || !fields.siteUrl.value) fields.siteUrl = { value: nsite.ssl_url || nsite.url };
+      // Свой домен из анкеты: подключаем сами, клиент делает две записи DNS у регистратора (письмо с готовым сайтом).
+      var wantDomain = cleanDomain(fields.domain && fields.domain.value);
+      if (wantDomain && !nsite.custom_domain) {
+        if (!validDomain(wantDomain)) domainNote = "свой домен: «" + fields.domain.value + "» не похоже на домен (пример: studio-lana.co.il)";
+        else {
+          try {
+            PropertiesService.getScriptProperties().setProperty("DOMAIN_WAIT:" + tabName, wantDomain + "|" + nsite.name + ".netlify.app");
+            nsite = connectDomain(nsite, wantDomain);
+            domainNew = wantDomain;
+          } catch (e) { PropertiesService.getScriptProperties().deleteProperty("DOMAIN_WAIT:" + tabName); domainNote = "свой домен: " + e.message; }
+        }
+      }
+      if (!fields.siteUrl || !fields.siteUrl.value) fields.siteUrl = { value: siteAddress(tabName, nsite) };
     } catch (e) {
       Logger.log(e.stack || e);
       pubError = e.message;
@@ -1275,6 +1376,7 @@ function makeSite(ss, tabName) {
     docs: (media.docs || []).map(function (p) { return p.path; })
   });
   var notes = media.notes.concat(r.notes);
+  if (domainNote) notes.push(domainNote);
   var root = DriveApp.getFolderById(PropertiesService.getScriptProperties().getProperty("FOLDER_ID"));
 
   // Старую версию этого сайта - в корзину (её можно восстановить 30 дней).
@@ -1330,6 +1432,7 @@ function makeSite(ss, tabName) {
     out.folderUrl, out.zipUrl, notes.join("\n"), r.problems.join("\n"), media.folder.getUrl(),
     out.siteUrl || (pubError ? "не опубликован" : ""), out.adminUrl || ""]]);
   linkify(list, row);
+  if (domainNew) { try { domainCheck(ss, tabName, nsite, domainNew); } catch (e) { Logger.log("домен: " + e); } }
   if (out.siteUrl) {
     setFreeUntil(ss, tabName);
     if (!CLIENT_MAIL_LATER) { try { autoSendClient(ss, tabName); } catch (e) { Logger.log("письмо клиенту: " + e); } }
@@ -1513,7 +1616,7 @@ function publishToNetlify(tabName, site, zipBlob, wantForm, notifyEmail, fingerp
   var props = PropertiesService.getScriptProperties();
   var notes = [];
   var hashKey = "NETLIFY_HASH:" + tabName;
-  var url0 = site.ssl_url || site.url, admin0 = site.admin_url || ("https://app.netlify.com/projects/" + site.name);
+  var url0 = siteAddress(tabName, site), admin0 = site.admin_url || ("https://app.netlify.com/projects/" + site.name);
   if (fingerprint && props.getProperty(hashKey) === fingerprint) {
     return { url: url0, adminUrl: admin0, formOk: true,
       notes: ["Netlify: сайт не изменился - заново не выкладывали (каждая выкладка стоит 15 кредитов Netlify)"] };
@@ -1531,7 +1634,7 @@ function publishToNetlify(tabName, site, zipBlob, wantForm, notifyEmail, fingerp
     waited += 3;
     deploy = netlify("get", "/deploys/" + deploy.id);
   }
-  var url = site.ssl_url || site.url;
+  var url = siteAddress(tabName, site);
   var adminUrl = site.admin_url || ("https://app.netlify.com/projects/" + site.name);
   if (deploy.state === "error") throw new Error("Netlify не принял сайт: " + (deploy.error_message || "ошибка публикации"));
   if (fingerprint) props.setProperty(hashKey, fingerprint);

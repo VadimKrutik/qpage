@@ -75,7 +75,7 @@
     { id: "about", title: "О вас", lead: "Как называется ваш бизнес и чем вы занимаетесь.", keys: ["name", "kind", "nameHe", "nameEn"] },
     { id: "offer", title: "Главное предложение", lead: "Это первое, что прочитают на сайте.", keys: ["tagline", "facts"] },
     { id: "more", title: "Подробнее о вас", lead: "Всё на этом шаге можно пропустить.", keys: ["about", "story", "legal"] },
-    { id: "contacts", title: "Контакты", lead: "Как клиенты будут с вами связываться.", keys: ["phone", "whatsapp", "telegram", "email", "payLink"] },
+    { id: "contacts", title: "Контакты", lead: "Как клиенты будут с вами связываться.", keys: ["phone", "whatsapp", "telegram", "email", "payLink", "domain"] },
     { id: "hours", title: "Часы работы", keys: ["workDays", "workFrom", "workTo", "fridayTo"] },
     { id: "place", title: "Где вы работаете", keys: ["address", "areas"] },
     { id: "services", title: "Услуги и цены", lead: "До 6 услуг или товаров. Цена «от», в шекелях. Без цены будет «цена по запросу».", group: "service" },
@@ -106,7 +106,7 @@
     kind: "Чем вы занимаетесь", tagline: "Главное предложение", facts: "Ваши преимущества", legal: "Официальное название и номер",
     telegram: "Telegram", email: "Эл. почта", areas: "Куда выезжаете", captions: "Подписи к фото", cta: "Главная кнопка",
     blocks: "Что ещё добавить", a11y: "Заявление о доступности", pricelist: "Цены", reviews: "Отзывы", steps: "Шаги",
-    license: "Лицензии и дипломы", priceLink: "Ссылка на файл с ценами", payLink: "Ссылка на оплату"
+    license: "Лицензии и дипломы", priceLink: "Ссылка на файл с ценами", payLink: "Ссылка на оплату", domain: "Свой домен"
   };
   var HELP = {
     languages: "Перевод на другие языки сделаем сами.",
@@ -132,6 +132,7 @@
     pricelist: "По строке на позицию, перед ценой поставьте тире. Например: Замена смесителя - 250",
     priceLink: "Если цены есть в файле. Ссылка начинается с https://",
     payLink: "Если клиенты платят вам по ссылке (Morning, Grow, PayPal): на сайте будет кнопка «Оплатить».",
+    domain: "Если уже купили адрес сайта. Например: studio-lana.co.il. Нет - пропустите.",
     reviews: "Каждый отзыв с новой строки, перед именем поставьте тире. Например: Всё сделали за день! - Анна",
     steps: "Каждый шаг с новой строки, до 8. Например: Вы звоните",
     license: "Каждый документ с новой строки. Например: Лицензия электрика № 123456",
@@ -421,12 +422,13 @@
     if (q.validate === "phone" && !(/^\+?[0-9 ()-]{9,20}$/.test(s) && s.replace(/\D/g, "").length >= 9)) return T("Только цифры, пробелы, + ( ) и -; от 9 цифр. Например: 050-123-4567");
     if (q.validate === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s)) return T("Проверьте адрес, например: name@example.com");
     if (q.validate === "url" && !/^https?:\/\/[^\s.]+\.\S+$/.test(s)) return T("Нужна ссылка, начинается с https://");
+    if (q.validate === "domain" && !/^(https?:\/\/)?(www\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,24}\/?$/i.test(s)) return T("Только адрес, например: studio-lana.co.il");
     if (q.validate === "number" && !/^\d+([.,]\d+)?$/.test(s)) return T("Только число, например: 250");
     var lines = s.split("\n");
     if (q.lines && lines.length > q.lines) return T("Не больше {n} строк", { n: q.lines });
     if (q.lineMax && lines.some(function (l) { return l.trim().length > q.lineMax; })) return T("Строка длинновата: не больше {n} знаков", { n: q.lineMax });
     if (q.max && s.length > q.max) return T("Слишком длинно: не больше {n} знаков", { n: q.max });
-    if (LINK && q.validate !== "url" && q.validate !== "email" && LINK.test(s)) return T("Без ссылок, пожалуйста");
+    if (LINK && q.validate !== "url" && q.validate !== "email" && q.validate !== "domain" && LINK.test(s)) return T("Без ссылок, пожалуйста");
     return "";
   }
   function validateStep(st) {

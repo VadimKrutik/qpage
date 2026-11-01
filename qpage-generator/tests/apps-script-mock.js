@@ -126,7 +126,7 @@ const ctx = {
   ScriptApp: { newTrigger: (fn) => { const t = { fn, getHandlerFunction: () => fn }; triggers.push(t); return chain(t); },
     getOAuthToken: () => "OAUTH", getProjectTriggers: () => triggers.slice(), deleteTrigger: (t) => { triggers.splice(triggers.indexOf(t), 1); } },
   PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => props[k] || null, setProperties: (o) => Object.assign(props, o),
-    setProperty: (k, v) => { props[k] = v; }, deleteProperty: (k) => { delete props[k]; } }) },
+    setProperty: (k, v) => { props[k] = v; }, deleteProperty: (k) => { delete props[k]; }, getProperties: () => Object.assign({}, props) }) },
   LockService: { getScriptLock: () => ({
     tryLock: (ms) => { lk.waited = ms; if (lk.busy) return false; lk.held = true; return true; },
     releaseLock: () => { lk.held = false; lk.released++; } }) },

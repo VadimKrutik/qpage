@@ -388,6 +388,47 @@ const answers0 = answers;
     delete site.custom_domain; answer = "не домен";
     alerts.length = 0; ctx.clientDomain();
     ok("домен: не домен - понятное сообщение, Netlify не трогаем", !patched && alerts[0].includes("Это не похоже на домен"), alerts[0]);
+    ok("домен: пока ждём DNS - адрес netlify.app, после «готово» - свой домен", (() => {
+      site.custom_domain = "lana-test.co.il"; site.ssl_url = "https://lana-test.co.il";
+      props["DOMAIN_WAIT:third"] = "lana-test.co.il|" + site.name + ".netlify.app";
+      const w = ctx.siteAddress("third", site);
+      delete props["DOMAIN_WAIT:third"];
+      const r = ctx.siteAddress("third", site);
+      delete site.custom_domain; site.ssl_url = "https://" + site.name + ".netlify.app";
+      return w === "https://" + site.name + ".netlify.app" && r === "https://lana-test.co.il";
+    })());
+
+    // Домен из анкеты: сборка сама подключает его, письмо клиенту с записями DNS, ночью - проверка и пересборка.
+    dns = {}; patched = null; sslCalls = 0;
+    const th = ss.getSheetByName("third");
+    th.cells = th.cells.filter((r) => r[0] !== "domain").concat([["domain", "свой домен", "WWW.Lana-Auto.co.il", "", "", "", ""]]);
+    ctx.makeSite(ss, "third");
+    const row3 = sl.cells.findIndex((r) => r[0] === "third");
+    ok("домен из анкеты: сборка подключила его в Netlify, статус «ждёт записей DNS», сайт на адресе netlify.app",
+      patched && patched.custom_domain === "lana-auto.co.il" && props["DOMAIN_WAIT:third"] === "lana-auto.co.il|" + site.name + ".netlify.app" &&
+      sl.cells[row3][dc] === "lana-auto.co.il - ждёт записей DNS" && ctx.clientInfo(ss, "third").siteUrl.includes(site.name + ".netlify.app"),
+      JSON.stringify(patched) + " | " + sl.cells[row3][dc] + " | " + sl.cells[row3][7]);
+    const msg = ctx.clientMessage(ctx.clientInfo(ss, "third"));
+    ok("домен из анкеты: в письме клиенту две записи DNS и обещание проверить", msg.includes("lana-auto.co.il") && msg.includes("A, имя @, значение 75.2.60.5") &&
+      msg.includes("CNAME, имя www, значение " + site.name + ".netlify.app") && msg.includes("каждую ночь"), msg);
+    patched = null; ctx.makeSite(ss, "third");
+    ok("домен из анкеты: повторная сборка не подключает заново", !patched);
+    ok("ночная проверка: записей нет - ничего не пересобираем", ctx.checkDomains().length === 0 && props["DOMAIN_WAIT:third"]);
+    dns = { "lana-auto.co.il A": ["75.2.60.5"], "www.lana-auto.co.il CNAME": [site.name + ".netlify.app."] };
+    site.ssl_url = "https://lana-auto.co.il";
+    const done = ctx.checkDomains();
+    ok("ночная проверка: записи появились - «готово», пересборка отдельным запуском",
+      done.join() === "third" && !props["DOMAIN_WAIT:third"] && props.DOMAIN_REBUILD === "third" && triggers.some((t) => t.fn === "rebuildDomainSites") &&
+      sl.cells[row3][dc] === "lana-auto.co.il - готово", done.join() + " | " + sl.cells[row3][dc]);
+    const nm2 = mails.length;
+    ctx.rebuildDomainSites();
+    const dm = mails.slice(nm2);
+    ok("пересборка: сайт с новым адресом, письмо клиенту и владельцу, триггер снят",
+      ctx.clientInfo(ss, "third").siteUrl.includes("lana-auto.co.il") && dm.some((m) => m.to === "third@example.com" && m.body.includes("https://lana-auto.co.il")) &&
+      dm.some((m) => m.subj === "QPortall: свой домен заработал") && !triggers.some((t) => t.fn === "rebuildDomainSites") && !props.DOMAIN_REBUILD,
+      JSON.stringify(dm) + " | " + sl.cells[row3][7]);
+    th.cells = th.cells.filter((r) => r[0] !== "domain");
+    delete site.custom_domain; site.ssl_url = "https://" + site.name + ".netlify.app";
     ctx.UrlFetchApp.fetch = realFetch; ctx.SpreadsheetApp.getUi = realUi; uiAvailable = false;
   }
 

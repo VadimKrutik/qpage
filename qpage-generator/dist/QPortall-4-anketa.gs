@@ -184,7 +184,7 @@ function anketaClean(src) {
     var lim = anketaLimitOf(q);
     var t = String(v).slice(0, lim.max);
     if (lim.lines) t = t.split("\n").slice(0, lim.lines).join("\n");
-    if (q.validate !== "url" && q.validate !== "email" && link.test(t)) out.__links = true;
+    if (q.validate !== "url" && q.validate !== "email" && q.validate !== "domain" && link.test(t)) out.__links = true;
     out[q.key] = t;
   });
   return out;

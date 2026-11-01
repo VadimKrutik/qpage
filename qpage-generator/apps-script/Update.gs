@@ -97,6 +97,7 @@ function ensureUpdateTrigger() {
 
 function autoUpdateScript() {
   try { checkHostingEnds(); } catch (e) { Logger.log(e); } // заодно раз в сутки: кончается ли бесплатный год
+  try { checkDomains(); } catch (e) { Logger.log(e); }     // и свои домены клиентов: появились ли записи DNS
   var p = PropertiesService.getScriptProperties(), token = p.getProperty("GITHUB_TOKEN");
   if (!token) return;
   var lock = LockService.getScriptLock();
