@@ -856,9 +856,17 @@ function colorValue(label) {
 function translate(text, from, to) {
   return text.split("\n").map(function (line) {
     if (!line.trim()) return line;
-    try { return LanguageApp.translate(line, from.gt, to.gt); }
+    try { return cleanTranslation(LanguageApp.translate(line, from.gt, to.gt)); }
     catch (err) { return line; }
   }).join("\n");
+}
+
+// Машинный перевод: без огласовок в иврите (לְתַקֵן → לתקן), без длинных тире и «„…”» - так пишут люди.
+function cleanTranslation(s) {
+  return String(s)
+    .replace(/[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/g, "")
+    .replace(/\s*[\u2014\u2013]\s*/g, " - ")
+    .replace(/[\u201E\u201C\u201D]/g, '"');
 }
 
 function geocode(address) {

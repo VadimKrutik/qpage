@@ -719,6 +719,8 @@ fs.writeFileSync(outFile, JSON.stringify(site, null, 1));
 // Анкета изменилась при обновлении → публикация отдельным запуском через минуту (если подключён Netlify).
 {
   const n0 = triggers.length, had = props.NETLIFY_TOKEN; props.NETLIFY_TOKEN = "nfp";
+  ok("машинный перевод: без огласовок, длинных тире и „кавычек”", ctx.cleanTranslation("לְתַקֵן — שְׁאֵלָה „טוב”") === 'לתקן - שאלה "טוב"' &&
+    ctx.cleanTranslation("A–B") === "A - B" && ctx.cleanTranslation("קוד QR־אתר") === "קוד QR־אתר", ctx.cleanTranslation("לְתַקֵן — שְׁאֵלָה „טוב”"));
   ok("обновление: анкета изменилась → запуск autoPublishAnketa", ctx.scheduleAnketaPublish() === true && triggers.length === n0 + 1 && triggers[n0].fn === "autoPublishAnketa");
   ctx.ScriptApp.deleteTrigger(triggers[n0]); if (had === undefined) delete props.NETLIFY_TOKEN; else props.NETLIFY_TOKEN = had;
 }
