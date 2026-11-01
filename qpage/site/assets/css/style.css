@@ -329,7 +329,7 @@ a:hover { color: var(--accent); }
 .hero-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; padding-top: 24px; }
 .hero-more .hero-areas { margin: 0; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
-.hero-tagline { margin: 24px 0 0; font-size: 1.15rem; color: var(--text); }
+.hero-tagline { margin: 24px 0 0; max-width: 68ch; font-size: 1.15rem; color: var(--text); }
 /* Главное фото - крупно, во всю ширину страницы (края совпадают с остальными блоками), не выше экрана.
    Рамка постоянной формы (без сдвига при загрузке); фото внутри целиком, не обрезается.
    Если фото другой формы (например вертикальное с телефона), по бокам - та же картинка, размытая. */
