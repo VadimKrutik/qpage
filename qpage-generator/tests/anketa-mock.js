@@ -214,7 +214,7 @@ const answers0 = answers;
   const setRow = (label) => set.cells.findIndex((r) => String(r[0]).startsWith(label));
   set.cells[setRow("Новых анкет в день")][1] = "1";
   const mails = [];
-  ctx.MailApp = { sendEmail: (to, subj, body) => mails.push({ to, subj, body }) };
+  ctx.MailApp = { sendEmail: (to, subj, body) => mails.push(typeof to === "object" ? { to: to.to, subj: to.subject, body: to.body, replyTo: to.replyTo } : { to, subj, body }) };
   ctx.Session = { getEffectiveUser: () => ({ getEmail: () => "owner@example.com" }) };
   ok("лимит новых анкет в день", post({ t: 60000, answers, files: {} }).error === "limit");
   post({ t: 60000, answers, files: {} });
@@ -240,7 +240,7 @@ const answers0 = answers;
   const namedRows = sites.cells.filter((r) => String(r[0] || "").trim()).length;
   for (let i = 0; i < 25; i++) sites.cells[i] ||= [];
   sites.cells[25] = ["", "", " "]; // невидимый пробел далеко внизу (так было у Vadim в C28)
-  const r4 = post({ t: 60000, answers: Object.assign({}, answers, { name: "Вторая студия", nameEn: "Second" }), files: {} });
+  const r4 = post({ t: 60000, answers: Object.assign({}, answers, { name: "Вторая студия", nameEn: "Second", email: "client@example.com", whatsapp: "052-111-2233" }), files: {} });
   const row4 = () => ank.cells.find((r) => r[0] === r4.key);
   const bs = ctx.buildSiteSheet;
   ctx.buildSiteSheet = () => { throw new Error("Диск недоступен"); };
@@ -254,6 +254,29 @@ const answers0 = answers;
   const m4 = mails.filter((m) => m.subj.includes("новая анкета - Вторая студия"));
   ok("письмо владельцу о новой анкете: телефон, сайт, ссылка исправлений, лист", m4.length === 1 && m4[0].to === "owner@example.com" &&
     m4[0].body.includes("Новая анкета: Вторая студия") && m4[0].body.includes("Сайт: ") && m4[0].body.includes("/?edit=" + r4.key) && m4[0].body.includes("лист «second»") && !m4[0].body.includes("—"), JSON.stringify(m4));
+  // --- Ссылка клиенту: окно с письмом и WhatsApp, письмо клиенту, отметка на «Сайты» ---
+  const savedAlerts = alerts.slice();
+  ss.setActiveSheet(ss.getSheetByName("second"));
+  uiAvailable = true; alerts.length = 0; ctx.sendLinkToClient(); uiAvailable = false;
+  const dlg = alerts[0] || "";
+  const sitesNow = ss.getSheetByName("Сайты");
+  const cRow = sitesNow.cells.findIndex((r) => r[0] === "second");
+  const siteLink = sitesNow.links[cRow][7];
+  ok("ссылка клиенту: окно с адресом сайта, личной ссылкой, кнопкой письма и WhatsApp", !!siteLink && dlg.includes(siteLink) &&
+    dlg.includes("/?edit=" + r4.key) && dlg.includes("sendClientEmail") && /https:\/\/wa\.me\/9725\d+\?text=/.test(dlg) && !dlg.includes("—"), dlg.slice(0, 600));
+  const nm = mails.length;
+  const res = ctx.sendClientEmail("second");
+  const cm = mails[nm] || {};
+  ok("письмо клиенту: на его почту, тема «Ваш сайт готов», ссылки внутри", mails.length === nm + 1 && cm.to === "client@example.com" &&
+    /^Ваш сайт готов/.test(cm.subj) && cm.body.includes(siteLink) && cm.body.includes("/?edit=" + r4.key) && /отправлено/.test(res), JSON.stringify(cm));
+  const cCol = sitesNow.cells[0].indexOf("ссылка клиенту");
+  ok("отметка «письмо <дата>» в колонке «ссылка клиенту»", cCol > 0 && /^письмо \d\d\.\d\d/.test(sitesNow.cells[cRow][cCol]), JSON.stringify(sitesNow.cells[0]));
+  ctx.markClientSent("second", "WhatsApp");
+  ok("WhatsApp дописывается второй строкой", /\nWhatsApp \d/.test(sitesNow.cells[cRow][cCol]), sitesNow.cells[cRow][cCol]);
+  ss.setActiveSheet(sitesNow); sitesNow.activeRow = 1;
+  uiAvailable = true; alerts.length = 0; ctx.sendLinkToClient(); uiAvailable = false;
+  ok("без выбранного клиента - подсказка", /Откройте лист клиента/.test(alerts[0] || ""), alerts[0]);
+  alerts.length = 0; alerts.push(...savedAlerts);
   const nEdit = mails.length;
   post({ edit: r4.key, answers: Object.assign({}, answers, { name: "Вторая студия" }) });
   run("processAnketas");

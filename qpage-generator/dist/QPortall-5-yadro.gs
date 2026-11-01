@@ -877,7 +877,7 @@ var QPageCore = (function () {
   const IMAGE_EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/svg+xml": "svg", "image/gif": "gif" };
   const MAX_PHOTOS = 8; // «Фото-витрина» рассчитана на 8 фото (узор 2, 2, 1, 2, 1)
 
-  return { rowsToFields, buildData, siteFiles, imageSize, metaDescription, splitPrice, youtubeId, splitReview, hoursText, COPY, LANGS, IMAGE_EXT, MAX_PHOTOS, MAX_REVIEWS, CTA, DESIGNS };
+  return { rowsToFields, buildData, siteFiles, imageSize, metaDescription, splitPrice, youtubeId, splitReview, hoursText, intlPhone, COPY, LANGS, IMAGE_EXT, MAX_PHOTOS, MAX_REVIEWS, CTA, DESIGNS };
 })();
 
 if (typeof module !== "undefined") module.exports = QPageCore;

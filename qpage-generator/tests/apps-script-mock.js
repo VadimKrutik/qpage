@@ -35,6 +35,7 @@ class Sheet {
       getDisplayValue() { return api.getDisplayValues()[0][0]; },
       // Текст со ссылкой: в ячейке — надпись, адрес — в sh.links.
       setRichTextValue(v) { (sh.cells[r - 1] ||= [])[c - 1] = v.text; (sh.links[r - 1] ||= [])[c - 1] = v.url; return api; },
+      getRichTextValue() { const u = (sh.links[r - 1] || [])[c - 1]; return { getLinkUrl: () => u || null }; },
       setFontWeight() { return api; }, setNumberFormat() { return api; }, setWrap() { return api; }, setFormulas(v) { return api.setValues(v); }
     };
     return api;

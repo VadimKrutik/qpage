@@ -310,6 +310,7 @@ function addMenu() {
       .addItem("Инструкция", "showHelp");
   } else {
     menu.addItem("Сделать сайт из этого листа", "makeSiteFromActiveSheet")
+      .addItem("Отправить клиенту ссылку на сайт", "sendLinkToClient")
       .addItem("Обработать последний ответ заново", "processLastResponse")
       .addSeparator()
       .addItem("Обновить форму (новые вопросы)", "updateForm")
@@ -519,7 +520,9 @@ var HELP_HTML = [
   "<li><b>QPortall → Ссылки</b> → «Ссылка для клиента» - отправьте её клиенту.</li>",
   "<li>После отправки анкеты сайт собирается сам за 1-2 минуты: новый лист клиента и строка на листе <b>«Сайты»</b>.</li>",
   "<li>На «Сайты»: <b>Открыть сайт</b> - сайт в интернете, <b>Папка</b> и <b>ZIP</b> - файлы на Диске, <b>Фото</b> - фото клиента, ",
-  "<b>Netlify</b> - управление сайтом. Колонка <b>«проверить»</b> - что стоит посмотреть (перевод, большие фото, ссылки).</li></ol>",
+  "<b>Netlify</b> - управление сайтом. Колонка <b>«проверить»</b> - что стоит посмотреть (перевод, большие фото, ссылки). О каждой новой анкете вам приходит письмо.</li>",
+  "<li>Посмотрели сайт, всё в порядке - стоя на листе клиента (или на его строке в «Сайты»): <b>QPortall → Отправить клиенту ссылку на сайт</b>. ",
+  "В окне - текст для клиента, кнопка письма на его почту и кнопка WhatsApp (там нажмите «Отправить»). Когда отправлено - видно в колонке <b>«ссылка клиенту»</b>.</li></ol>",
   "<h3>3. Поправить сайт</h3><ol>",
   "<li>Откройте лист клиента. Тексты - в колонках <b>ru / he / en</b>, остальное - в колонке <b>«значение»</b>:",
   "<ul><li><b>languages</b> - языки сайта через запятую, первый - основной: <code>ru,he,en</code> (убрать язык - стереть его);</li>",
@@ -911,6 +914,102 @@ function makeSiteFromActiveSheet() {
     (r.problems.length ? "Сайт собран, но есть ошибки:\n" + r.problems.join("\n") : r.pubError ? "Сайт собран на Диске." : "Сайт готов.") +
     "\n\nПапка: " + r.folderUrl + (r.siteUrl ? "" : "\nZIP для Netlify Drop: " + r.zipUrl) +
     (r.notes.length ? "\n\nПроверьте:\n" + r.notes.join("\n") : ""));
+}
+
+// ---------- Ссылка клиенту на готовый сайт: письмо и WhatsApp ----------
+// Владелец проверяет сайт и сам решает, когда отправить клиенту ссылку (QPortall → «Отправить клиенту ссылку на сайт»).
+var SENT_COL = "ссылка клиенту";
+
+// Лист клиента из активного листа или из выделенной строки «Сайты» (как «Сделать сайт из этого листа»).
+function activeClientTab(ss) {
+  var sh = ss.getActiveSheet();
+  if (sh.getName() === SITES_SHEET && sh.getActiveCell().getRow() > 1) {
+    var tab = sh.getRange(sh.getActiveCell().getRow(), 1).getDisplayValue();
+    if (ss.getSheetByName(tab)) sh = ss.getSheetByName(tab);
+  }
+  return isSiteSheet(sh) ? sh.getName() : "";
+}
+
+function cellLink(cell) {
+  var rt = cell.getRichTextValue && cell.getRichTextValue();
+  var url = (rt && rt.getLinkUrl && rt.getLinkUrl()) || String(cell.getDisplayValue() || "").trim();
+  return /^https:\/\//.test(url) ? url : "";
+}
+
+// Всё для сообщения клиенту: имя, почта, WhatsApp, адрес сайта, личная ссылка для исправлений.
+function clientInfo(ss, tab) {
+  var vals = ss.getSheetByName(tab).getDataRange().getDisplayValues();
+  var v = {};
+  vals.forEach(function (r) { v[r[0]] = String(r[3] || r[2] || "").trim(); });
+  var info = { tab: tab, name: v.name || tab, email: v.email || "", wa: QPageCore.intlPhone(v.whatsapp || v.phone || "").replace(/\D/g, ""),
+    siteUrl: "", editUrl: "", row: 0 };
+  var list = sitesSheet(ss);
+  var data = list.getDataRange().getDisplayValues();
+  for (var i = 1; i < data.length; i++) if (data[i][0] === tab) info.row = i + 1;
+  if (info.row) {
+    info.siteUrl = cellLink(list.getRange(info.row, 8));
+    var col = data[0].indexOf(typeof SITES_EXTRA !== "undefined" ? SITES_EXTRA[0] : "");
+    if (col !== -1) info.editUrl = cellLink(list.getRange(info.row, col + 1));
+  }
+  return info;
+}
+
+function clientMessage(info) {
+  return "Здравствуйте!\n\nВаш сайт «" + info.name + "» готов: " + info.siteUrl +
+    (info.editUrl ? "\n\nЕсли нужно что-то поправить, откройте свою анкету по этой ссылке, исправьте и отправьте. Сайт обновится сам:\n" + info.editUrl : "") +
+    "\n\nQPortall";
+}
+
+function markClientSent(tab, how) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var list = sitesSheet(ss);
+  var head = list.getRange(1, 1, 1, list.getLastColumn()).getDisplayValues()[0];
+  var col = head.indexOf(SENT_COL) + 1;
+  if (!col) {
+    var end = head.length;
+    while (end > 0 && !String(head[end - 1]).trim()) end--;
+    col = Math.max(end, SITES_HEADER.length) + 1;
+    list.getRange(1, col, 1, 1).setValues([[SENT_COL]]).setFontWeight("bold");
+  }
+  var info = clientInfo(ss, tab);
+  if (!info.row) return;
+  var cell = list.getRange(info.row, col, 1, 1);
+  var was = String(cell.getDisplayValue() || "").trim();
+  var now = how + " " + Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), "dd.MM HH:mm");
+  cell.setValues([[was ? was + "\n" + now : now]]);
+}
+
+function sendLinkToClient() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var tab = activeClientTab(ss);
+  if (!tab) { notify("Откройте лист клиента или выделите его строку на листе «Сайты» и выберите пункт ещё раз."); return; }
+  var info = clientInfo(ss, tab);
+  if (!info.siteUrl) { notify("Сайт «" + info.name + "» ещё не опубликован. Сначала «Сделать сайт из этого листа»."); return; }
+  var text = clientMessage(info);
+  var wa = info.wa ? "https://wa.me/" + info.wa + "?text=" + encodeURIComponent(text) : "";
+  var btn = "display:inline-block;padding:8px 16px;margin:4px 8px 4px 0;border-radius:6px;color:#fff;text-decoration:none;border:0;font:14px Arial,sans-serif;cursor:pointer;";
+  var html = '<div style="font:14px/1.5 Arial,sans-serif">' +
+    '<p style="margin:0 0 6px">Сообщение клиенту:</p>' +
+    '<pre style="white-space:pre-wrap;word-break:break-all;background:#f3f3f3;padding:10px;border-radius:6px;font:13px/1.45 Arial,sans-serif">' + escapeHtml(text) + "</pre>" +
+    (info.email ? '<button id="em" style="' + btn + 'background:#37474f">Отправить письмо на ' + escapeHtml(info.email) + "</button>" : "<p>Почты клиента нет.</p>") +
+    (wa ? '<a id="wa" href="' + escapeHtml(wa) + '" target="_blank" rel="noopener" style="' + btn + 'background:#1e7e34">Открыть WhatsApp</a>' : "<p>Телефона WhatsApp нет.</p>") +
+    '<p id="m" style="margin:8px 0 0"></p>' +
+    "<script>var t=" + JSON.stringify(tab) + ",m=document.getElementById('m'),em=document.getElementById('em'),wa=document.getElementById('wa');" +
+    "if(em)em.onclick=function(){em.disabled=true;m.textContent='Отправляю…';google.script.run.withSuccessHandler(function(r){m.textContent=r;})" +
+    ".withFailureHandler(function(e){em.disabled=false;m.textContent=e.message;}).sendClientEmail(t);};" +
+    "if(wa)wa.onclick=function(){google.script.run.markClientSent(t,'WhatsApp');m.textContent='WhatsApp открыт: нажмите там «Отправить».';};</script></div>";
+  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(html).setWidth(600).setHeight(440), "Ссылка клиенту: " + info.name);
+}
+
+function sendClientEmail(tab) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var info = clientInfo(ss, tab);
+  if (!info.email) throw new Error("У клиента нет почты.");
+  if (!info.siteUrl) throw new Error("Сайт ещё не опубликован.");
+  MailApp.sendEmail({ to: info.email, subject: "Ваш сайт готов - " + info.name, body: clientMessage(info),
+    name: "QPortall", replyTo: Session.getEffectiveUser().getEmail() });
+  markClientSent(tab, "письмо");
+  return "Письмо отправлено на " + info.email + ". Отметка - в колонке «" + SENT_COL + "» на листе «Сайты».";
 }
 
 var MIME = { html: "text/html", css: "text/css", js: "application/javascript", svg: "image/svg+xml", xml: "application/xml" };
