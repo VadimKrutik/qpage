@@ -1311,7 +1311,8 @@ function scriptApi(method, path, body) {
   var code = r.getResponseCode(), text = r.getContentText();
   if (code === 200) return text ? JSON.parse(text) : {};
   if (/has not been used|not enabled|SERVICE_DISABLED|User has not enabled/i.test(text))
-    throw new Error("Включите Apps Script API: " + APPS_SCRIPT_API_PAGE + " → «Google Apps Script API» → Вкл. Через минуту запустите обновление ещё раз.");
+    throw new Error("Включите Apps Script API: " + APPS_SCRIPT_API_PAGE + " → «Google Apps Script API» → Вкл. Через 10 минут запустите обновление ещё раз.\nОтвет Google: " +
+      text.replace(/\s+/g, " ").slice(0, 400));
   if (code === 403 && /insufficient|scope|PERMISSION_DENIED/i.test(text))
     throw new Error("У скрипта нет прав на обновление. Замените appsscript.json (инструкция у Claude) и запустите ещё раз.\nОтвет Google: " +
       text.replace(/\s+/g, " ").slice(0, 300));
