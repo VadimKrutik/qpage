@@ -348,4 +348,40 @@ const answers0 = answers;
   ok("«Ссылки»: адрес анкеты QPortall первым, Google Форма — запасная", alerts[0].includes("Анкета QPortall для клиента: <a href=\"" + nsite.ssl_url) && alerts[0].includes("Google Форма (запасная)"), alerts[0]);
   ok("меню: «Опубликовать анкету» и «собрать ещё раз»", (ctx.addMenu(), true));
 
+  // --- Свой домен клиента: Netlify получает домен, окно с записями DNS, статус на «Сайты» ---
+  {
+    ok("домен: очистка https://www. и пути", ctx.cleanDomain(" https://WWW.Studio-Lana.co.il/about ") === "studio-lana.co.il");
+    ok("домен: проверка формата", ctx.validDomain("studio-lana.co.il") && ctx.validDomain("lana.com") && !ctx.validDomain("lana") && !ctx.validDomain("lana .com") && !ctx.validDomain("-lana.com"));
+    const site = nl.sites[props["NETLIFY_SITE:third"]];
+    const realFetch = ctx.UrlFetchApp.fetch, realUi = ctx.SpreadsheetApp.getUi;
+    let dns = {}, patched = null, sslCalls = 0, answer = "https://www.Lana-Test.co.il/";
+    ctx.UrlFetchApp.fetch = (url, opt) => {
+      opt = opt || {};
+      const d = url.match(/^https:\/\/dns\.google\/resolve\?name=([^&]+)&type=(\w+)/);
+      if (d) return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ Answer: (dns[decodeURIComponent(d[1]) + " " + d[2]] || []).map((x) => ({ data: x })) }) };
+      if (url.endsWith("/sites/" + site.id) && opt.method === "patch") {
+        patched = JSON.parse(opt.payload); site.custom_domain = patched.custom_domain;
+        return { getResponseCode: () => 200, getContentText: () => JSON.stringify(site) };
+      }
+      if (url.endsWith("/sites/" + site.id + "/ssl")) { sslCalls++; return { getResponseCode: () => 200, getContentText: () => "{}" }; }
+      return realFetch(url, opt);
+    };
+    ctx.SpreadsheetApp.getUi = () => Object.assign(realUi(), { prompt: () => ({ getSelectedButton: () => "OK", getResponseText: () => answer }), Button: { OK: "OK" }, ButtonSet: { OK_CANCEL: 1 } });
+    uiAvailable = true; ss.setActiveSheet(ss.getSheetByName("third"));
+    alerts.length = 0; ctx.clientDomain();
+    const sl = ss.getSheetByName("Сайты"), dc = sl.cells[0].indexOf("свой домен"), tr = sl.cells.findIndex((r) => r[0] === "third");
+    ok("домен: Netlify получил домен и www, окно с двумя записями, статус «ждёт записей DNS»",
+      patched && patched.custom_domain === "lana-test.co.il" && patched.domain_aliases[0] === "www.lana-test.co.il" &&
+      alerts[0].includes("75.2.60.5") && alerts[0].includes(site.name + ".netlify.app") && sslCalls === 0 &&
+      dc > 0 && sl.cells[tr][dc] === "lana-test.co.il - ждёт записей DNS", alerts[0] + " | " + JSON.stringify(patched) + " | " + (dc > 0 && sl.cells[tr][dc]));
+    dns = { "lana-test.co.il A": ["75.2.60.5"], "www.lana-test.co.il CNAME": [site.name + ".netlify.app."] };
+    patched = null; alerts.length = 0; ctx.clientDomain();
+    ok("домен: записи на месте - домен не спрашивает заново, https запрошен, статус «готово»",
+      !patched && sslCalls === 1 && alerts[0].includes("https://lana-test.co.il") && sl.cells[tr][dc] === "lana-test.co.il - готово", alerts[0] + " | " + sl.cells[tr][dc]);
+    delete site.custom_domain; answer = "не домен";
+    alerts.length = 0; ctx.clientDomain();
+    ok("домен: не домен - понятное сообщение, Netlify не трогаем", !patched && alerts[0].includes("Это не похоже на домен"), alerts[0]);
+    ctx.UrlFetchApp.fetch = realFetch; ctx.SpreadsheetApp.getUi = realUi; uiAvailable = false;
+  }
+
 }

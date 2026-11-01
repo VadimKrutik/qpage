@@ -313,6 +313,7 @@ function addMenu() {
   } else {
     menu.addItem("Сделать сайт из этого листа", "makeSiteFromActiveSheet")
       .addItem("Отправить клиенту ссылку на сайт", "sendLinkToClient")
+      .addItem("Свой домен для сайта клиента", "clientDomain")
       .addItem(clientPaused() ? "Пауза отправки клиентам: снять (письма уйдут)" : "Пауза отправки клиентам: включить", "toggleClientPause")
       .addItem("Обработать последний ответ заново", "processLastResponse")
       .addSeparator()
@@ -540,6 +541,11 @@ var HELP_HTML = [
   "Адрес сайта в интернете не меняется. Окно «Сайт готов» закройте кнопкой OK.</li>",
   "<li>Фото: папка <b>«&lt;лист&gt; - фото»</b> на Диске (ссылка «Фото»). Логотип назовите <b>logo.png</b>, ",
   "остальные фото идут в галерею по алфавиту. Тяжёлые фото и HEIC (iPhone) генератор сам уменьшит и переведёт в JPG. Потом снова «Сделать сайт».</li></ol>",
+  "<h3>Свой домен клиента (например studio-lana.co.il)</h3><ol>",
+  "<li>Клиент покупает домен у любого регистратора (.co.il, .com) и даёт доступ к настройкам DNS (или делает записи сам).</li>",
+  "<li>Стоя на листе клиента: <b>QPortall → Свой домен для сайта клиента</b> → впишите домен. В окне - две записи DNS, их нужно добавить у регистратора.</li>",
+  "<li>Через 10-60 минут снова откройте этот пункт: окно покажет, видны ли записи, и включит https. Колонка <b>«свой домен»</b> на «Сайты». ",
+  "Старый адрес …netlify.app тоже работает и ведёт на новый.</li></ol>",
   "<h3>4. Удалить сайт из интернета</h3><ol>",
   "<li>На «Сайты» нажмите <b>Netlify</b> у нужного сайта → <b>Project configuration</b> → вкладка <b>Configuration</b> → ",
   "внизу <b>Danger zone</b> → <b>Delete project</b>.</li>",
@@ -1152,6 +1158,68 @@ function sendClientEmail(tab) {
   if (!info.siteUrl) throw new Error("Сайт ещё не опубликован.");
   mailClient(ss, info, "письмо");
   return "Письмо отправлено на " + info.email + ". Отметка - в колонке «" + SENT_COL + "» на листе «Сайты».";
+}
+
+// ---------- Свой домен клиента ----------
+// Netlify: домен в настройках сайта; клиент у регистратора делает A @ → 75.2.60.5 и CNAME www → <сайт>.netlify.app.
+var DOMAIN_COL = "свой домен";
+var NETLIFY_LB_IP = "75.2.60.5";
+
+function cleanDomain(s) {
+  return String(s || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "");
+}
+function validDomain(d) { return /^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/.test(d); }
+
+// Что видно в DNS сейчас (через публичный DNS Google): A-записи домена и CNAME у www.
+function dnsLookup(name, type) {
+  try {
+    var r = JSON.parse(UrlFetchApp.fetch("https://dns.google/resolve?name=" + encodeURIComponent(name) + "&type=" + type, { muteHttpExceptions: true }).getContentText());
+    return (r.Answer || []).map(function (a) { return String(a.data).replace(/\.$/, "").toLowerCase(); });
+  } catch (e) { return []; }
+}
+
+function clientDomain() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var tab = activeClientTab(ss);
+  if (!tab) { notify("Откройте лист клиента или выделите его строку на листе «Сайты» и выберите пункт ещё раз."); return; }
+  var props = PropertiesService.getScriptProperties();
+  if (!props.getProperty("NETLIFY_TOKEN") || !props.getProperty("NETLIFY_SITE:" + tab)) {
+    notify("Сайт «" + tab + "» ещё не опубликован на Netlify. Сначала «Сделать сайт из этого листа»."); return;
+  }
+  var site = netlify("get", "/sites/" + props.getProperty("NETLIFY_SITE:" + tab));
+  var domain = cleanDomain(site.custom_domain);
+  if (!domain) {
+    var ui = SpreadsheetApp.getUi();
+    var ans = ui.prompt("Свой домен для «" + tab + "»", "Домен клиента, например studio-lana.co.il (без https и www):", ui.ButtonSet.OK_CANCEL);
+    if (ans.getSelectedButton() !== ui.Button.OK) return;
+    domain = cleanDomain(ans.getResponseText());
+    if (!validDomain(domain)) { notify("Это не похоже на домен: «" + ans.getResponseText() + "». Пример: studio-lana.co.il"); return; }
+    try { site = netlify("patch", "/sites/" + site.id, { custom_domain: domain, domain_aliases: ["www." + domain] }); }
+    catch (e) { notify(e.status === 422 ? "Netlify не принял домен «" + domain + "»: он уже подключён к другому сайту." : "Netlify: " + e.message); return; }
+  }
+  notify(domainReport(ss, tab, site, domain));
+}
+
+// Окно: какие записи сделать у регистратора и видны ли они уже. Если видны - просим Netlify выпустить https.
+function domainReport(ss, tab, site, domain) {
+  var host = site.name + ".netlify.app";
+  var a = dnsLookup(domain, "A"), www = dnsLookup("www." + domain, "CNAME");
+  var aOk = a.length > 0 && a.every(function (ip) { return ip === NETLIFY_LB_IP; });
+  var wOk = www.indexOf(host) !== -1;
+  var https = "";
+  if (aOk || wOk) {
+    try { netlify("post", "/sites/" + site.id + "/ssl"); https = "https включается (до часа)."; }
+    catch (e) { https = e.status === 422 ? "https будет готов, когда записи разойдутся по интернету (до суток). Откройте этот пункт позже." : "https: " + e.message; }
+  }
+  var status = aOk && wOk ? "готово" : aOk || wOk ? "частично" : "ждёт записей DNS";
+  var list = sitesSheet(ss), info = clientInfo(ss, tab);
+  if (info.row) list.getRange(info.row, sitesCol(list, DOMAIN_COL), 1, 1).setValues([[domain + " - " + status]]);
+  return "Домен " + domain + " подключён к сайту «" + tab + "» в Netlify.\n\n" +
+    "У регистратора домена нужны две записи DNS:\n" +
+    "1) A, имя @ (сам домен), значение " + NETLIFY_LB_IP + " - " + (aOk ? "есть" : a.length ? "сейчас другая: " + a.join(", ") : "пока нет") + "\n" +
+    "2) CNAME, имя www, значение " + host + " - " + (wOk ? "есть" : www.length ? "сейчас другая: " + www.join(", ") : "пока нет") + "\n\n" +
+    (aOk && wOk ? "Записи на месте. " + https + " Сайт будет открываться по адресу https://" + domain + "\nКогда https заработает, нажмите «Сделать сайт из этого листа»: в сайт попадёт новый адрес (для Google и превью ссылок)." :
+      "Записи появляются через 10-60 минут после того, как их сделали. Потом снова откройте «QPortall → Свой домен для сайта клиента»." + (https ? " " + https : ""));
 }
 
 var MIME = { html: "text/html", css: "text/css", js: "application/javascript", svg: "image/svg+xml", xml: "application/xml" };
