@@ -649,6 +649,14 @@ fs.writeFileSync(outFile, JSON.stringify(site, null, 1));
     fields.tagline = Object.assign({}, fields.tagline, { value: "x".repeat(401), ru: "x".repeat(401) });
     return ctx.QPageCore.siteFiles(fields, ctx.TEMPLATE_FILES, ctx.TEMPLATE_TEXT, "vid", { photos: [] }).notes.some((w) => /главное предложение длиннее 400/.test(w));
   })());
+  ok("Search Console: тег подтверждения из строки googleVerify (код или весь тег), мусор не попадает", (() => {
+    const html = (val) => { const f = ctx.QPageCore.rowsToFields(rows); f.googleVerify = { value: val, ru: "", he: "", en: "" };
+      return ctx.QPageCore.siteFiles(f, ctx.TEMPLATE_FILES, ctx.TEMPLATE_TEXT, "vid", { photos: [] }).files["index.html"]; };
+    const tag = '<meta name="google-site-verification" content="xLeity8X1A-TGO4CDSFn9_Gp8OYI81sylIV_lBezvKk">';
+    return html("xLeity8X1A-TGO4CDSFn9_Gp8OYI81sylIV_lBezvKk").includes(tag) &&
+      html('<meta name="google-site-verification" content="xLeity8X1A-TGO4CDSFn9_Gp8OYI81sylIV_lBezvKk" />').includes(tag) &&
+      !html('"><script>x</script>').includes("google-site-verification") && !html("").includes("google-site-verification");
+  })());
   const softs = (html) => (html.match(/<section\b[^>]*>/g) || []).filter((t) => /class="section/.test(t) && !/\shidden/.test(t)).map((t) => /section-soft/.test(t) ? 1 : 0).join("");
   ok("вид: фон видимых блоков чередуется (белый, серый, …)", [ci, vi, si].every((h) => /^(01)*0?$/.test(softs(h))), [ci, vi, si].map(softs).join(" | "));
   ok("вид: строка «внешний вид» в листе клиента", rows.some((r) => r[0] === "design" && /^акцент: Фото-витрина \/ Текстовый блок \/ Классический вариант$/.test(r[1])), JSON.stringify(rows.find((r) => r[0] === "design")));

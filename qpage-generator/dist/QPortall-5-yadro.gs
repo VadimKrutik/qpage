@@ -427,9 +427,16 @@ var QPageCore = (function () {
     const seo = {
       url: isUrl(v("siteUrl")) ? v("siteUrl").trim().replace(/\/*$/, "/") : "",
       days: hoursFromDays ? parseDays(v("workDays")) : [],
-      hours: normHours(v("workHours")), friday: normHours(v("fridayHours"))
+      hours: normHours(v("workHours")), friday: normHours(v("fridayHours")),
+      // Код подтверждения Google Search Console: сам код или весь тег <meta name="google-site-verification" ...>.
+      googleVerify: googleVerifyCode(v("googleVerify"))
     };
     return { site, text, warnings, seo };
+  }
+
+  function googleVerifyCode(x) {
+    const s = String(x || "").trim(), m = s.match(/content\s*=\s*["']([^"']+)["']/i), code = (m ? m[1] : s).trim();
+    return /^[A-Za-z0-9_-]{20,100}$/.test(code) ? code : "";
   }
 
   // Описание для поисковиков: 120-155 знаков (короче - Google дописывает своё, длиннее - обрезает).
@@ -727,6 +734,7 @@ var QPageCore = (function () {
     const tags = [];
     const meta = (prop, content) => { if (content) tags.push('<meta property="' + prop + '" content="' + escXml(content) + '">'); };
     if (url) tags.push('<link rel="canonical" href="' + escXml(url) + '">');
+    if (seo.googleVerify) tags.push('<meta name="google-site-verification" content="' + seo.googleVerify + '">');
     meta("og:type", "website");
     meta("og:site_name", t.hero.name);
     meta("og:title", t.meta.title);
