@@ -399,17 +399,22 @@
     frame.focus();
   }
 
-  function renderAccessibility() {
-    var list = $("#accessibility-list");
+  // Пункты юридических текстов (доступность, конфиденциальность): {name} - название бизнеса,
+  // {date} - дата последнего обновления (публикации сайта). Без даты пункт с {date} не показываем.
+  function renderLegal(list, items) {
     list.textContent = "";
-    if (!t.accessibility) return;
     var date = SITE.accessibilityDate
       ? new Intl.DateTimeFormat(LOCALES[currentLang] || currentLang, { dateStyle: "long" }).format(new Date(SITE.accessibilityDate + "T12:00:00"))
       : "";
-    (t.accessibility.items || []).forEach(function (p) {
+    var name = (t.hero && t.hero.name) || "";
+    (items || []).forEach(function (p) {
       if (!date && p.indexOf("{date}") !== -1) return;
-      list.appendChild(richText(el("li"), fill(p, { date: date })));
+      list.appendChild(richText(el("li"), fill(p, { date: date, name: name })));
     });
+  }
+
+  function renderAccessibility() {
+    renderLegal($("#accessibility-list"), t.accessibility && t.accessibility.items);
   }
 
   function renderOffers() {
@@ -498,11 +503,7 @@
   }
 
   function renderPrivacy() {
-    var list = $("#privacy-list");
-    list.textContent = "";
-    t.privacy.items.forEach(function (p) {
-      list.appendChild(richText(el("li"), p));
-    });
+    renderLegal($("#privacy-list"), t.privacy.items);
   }
 
   function renderConsent() {

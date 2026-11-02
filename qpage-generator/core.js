@@ -414,12 +414,18 @@ var QPageCore = (function () {
         : tx("hours", l);
       t.map.address = tx("address", l);
       // Пункты о конфиденциальности: про форму и карту - только если они есть на сайте.
+      // Порядок пунктов шаблона: владелец, cookie, язык, форма, карта, видео, связь, изменения текста.
       const p = tpl.text[l].privacy.items;
-      t.privacy.items = [p[0], p[1]]
-        .concat(formOn ? [p[2]] : [])
-        .concat(mapOn ? [p[3]] : [])
-        .concat(video ? [p[4]] : [])
-        .concat([g.privacyContact]); // {contact} сайт показывает ссылкой «написать нам», без адреса почты в тексте
+      t.privacy.items = [p[0], p[1], p[2]]
+        .concat(formOn ? [p[3]] : [])
+        .concat(mapOn ? [p[4]] : [])
+        .concat(video ? [p[5]] : [])
+        .concat([g.privacyContact]) // {contact} сайт показывает ссылкой «написать нам», без адреса почты в тексте
+        .concat(p[7] ? [p[7]] : []);
+      // Название бизнеса из анкеты - в оба юридических текста. Если в названии уже есть кавычки, свои «» не добавляем.
+      const legalName = (str) => (/[«»"„“”]/.test(name) ? String(str).replace(/«\{name\}»/g, "{name}") : String(str)).replace(/\{name\}/g, () => name);
+      t.privacy.items = t.privacy.items.filter(Boolean).map(legalName);
+      if (t.accessibility) t.accessibility.items = (t.accessibility.items || []).map(legalName);
       t.footer.rights = "© {year} " + name;
       text[l] = t;
     });
@@ -704,7 +710,11 @@ var QPageCore = (function () {
       if (part === "{privacy}") return '<a href="#privacy" class="text-link">' + e(lang === "ru" ? "«" + t.privacy.title + "»" : "\u201C" + t.privacy.title + "\u201D") + "</a>";
       return e(part);
     }).join("");
-    html = inner(html, "privacy-list", t.privacy.items.map((p) => "<li>" + rich(p) + "</li>").join(""));
+    // {date} - дата последнего обновления (публикации), как её покажет сайт.
+    let legalDate = S.accessibilityDate || "";
+    try { if (legalDate) legalDate = new Intl.DateTimeFormat(LOCALES[lang] || lang, { dateStyle: "long" }).format(new Date(legalDate + "T12:00:00")); } catch (err) { /* остаётся ГГГГ-ММ-ДД */ }
+    html = inner(html, "privacy-list", t.privacy.items.filter((p) => legalDate || p.indexOf("{date}") < 0)
+      .map((p) => "<li>" + rich(fill(p, { date: legalDate })) + "</li>").join(""));
     html = inner(html, "f-consent-text", rich(t.form.consent));
 
     // Подвал.

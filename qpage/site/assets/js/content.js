@@ -317,13 +317,13 @@ window.QPAGE = {
         summary: "Мы хотим, чтобы сайтом мог пользоваться каждый, в том числе люди с ограниченными возможностями.",
         more: "Заявление о доступности",
         items: [
-          "Сайт сделан с учётом израильского стандарта ת״י 5568 и рекомендаций WCAG 2.1 на уровне AA.",
+          "Сайт «{name}» сделан с учётом израильского стандарта ת״י 5568 и рекомендаций WCAG 2.1 на уровне AA.",
           "Сайтом можно пользоваться с клавиатуры, с программами чтения с экрана и при увеличении текста до 200%.",
           "У изображений есть текстовые описания, у полей формы - подписи и понятные сообщения об ошибках.",
           "Сайт правильно отображается на телефоне и компьютере; текст на иврите идёт справа налево.",
           "Карта и видео загружаются со сторонних сервисов только по нажатию кнопки; их доступность от нас не зависит.",
           "Если вам что-то неудобно или не работает, свяжитесь с нами: {contact}. Мы ответим и постараемся помочь.",
-          "Заявление обновлено: {date}."
+          "Мы можем изменять это заявление без предварительного уведомления. Действует последняя версия, опубликованная на этой странице. Последнее обновление: {date}"
         ]
       },
       privacy: {
@@ -331,12 +331,14 @@ window.QPAGE = {
         summary: "Сайт не использует cookie и рекламу. Ваши данные нужны нам только для ответа на ваше обращение.",
         more: "Подробнее",
         items: [
+          "Владелец сайта и ответственный за ваши данные - «{name}».",
           "Сайт не использует cookie, счётчики посещений и рекламные системы.",
           "В браузере сохраняется только выбранный язык сайта. Это не персональные данные; их можно удалить, очистив данные сайта в браузере.",
           "Данные из формы (имя, телефон, эл. почта, сообщение) нужны только для ответа на вашу заявку. Заявка хранится у хостинга сайта (Netlify) и приходит нам на эл. почту; если вы отправляете её через WhatsApp, текст проходит через WhatsApp. Мы не передаём данные другим лицам и не используем для рассылок. Закон не обязывает вас их сообщать, но без них мы не сможем ответить.",
           "Карта OpenStreetMap загружается только по вашему нажатию; в этот момент сервис OpenStreetMap получает ваш IP-адрес. Кнопки WhatsApp, Telegram, Google Maps и Waze открывают соответствующие сервисы.",
           "Видео YouTube загружается только по вашему нажатию; в этот момент YouTube (Google) получает ваш IP-адрес и может сохранить данные в браузере.",
-          "Чтобы узнать, изменить или удалить свои данные, свяжитесь с нами: {contact}."
+          "Чтобы узнать, изменить или удалить свои данные, свяжитесь с нами: {contact}.",
+          "Мы можем изменять этот текст без предварительного уведомления. Действует последняя версия, опубликованная на этой странице. Последнее обновление: {date}"
         ],
         demoNote: "Сейчас форма работает в демонстрационном режиме и никаких данных не собирает."
       },
@@ -538,13 +540,13 @@ window.QPAGE = {
         summary: "חשוב לנו שכל אחד יוכל להשתמש באתר, כולל אנשים עם מוגבלויות.",
         more: "הצהרת נגישות",
         items: [
-          "האתר נבנה בהתאם לתקן הישראלי ת״י 5568 ולהנחיות WCAG 2.1 ברמה AA.",
+          "האתר של {name} נבנה בהתאם לתקן הישראלי ת״י 5568 ולהנחיות WCAG 2.1 ברמה AA.",
           "ניתן להשתמש באתר באמצעות המקלדת, עם תוכנות קוראות מסך ובהגדלת הטקסט עד 200%.",
           "לתמונות יש תיאור טקסטואלי, ולשדות הטופס יש תוויות והודעות שגיאה ברורות.",
           "האתר מוצג כראוי בטלפון ובמחשב; הטקסט בעברית מוצג מימין לשמאל.",
           "המפה והסרטון נטענים משירותים חיצוניים רק לאחר לחיצה על כפתור; הנגישות שלהם אינה בשליטתנו.",
           "אם משהו אינו נוח או אינו עובד, פנו אלינו: {contact}. נחזור אליכם וננסה לעזור.",
-          "ההצהרה עודכנה: {date}."
+          "אנו רשאים לשנות הצהרה זו בכל עת וללא הודעה מוקדמת. הנוסח המחייב הוא הנוסח האחרון שפורסם בעמוד זה. עדכון אחרון: {date}."
         ]
       },
       privacy: {
@@ -552,12 +554,14 @@ window.QPAGE = {
         summary: "האתר אינו משתמש בעוגיות ובפרסום. הפרטים שלכם משמשים אותנו רק כדי לענות לפנייה שלכם.",
         more: "פרטים נוספים",
         items: [
+          "בעל האתר והאחראי על המידע שלכם: {name}.",
           "האתר אינו משתמש בעוגיות (cookies), במוני כניסות או במערכות פרסום.",
           "בדפדפן נשמרת רק שפת האתר שבחרתם. זה אינו מידע אישי, וניתן למחוק אותו בניקוי נתוני האתר בדפדפן.",
           "הפרטים מהטופס (שם, טלפון, דוא״ל, הודעה) משמשים רק למענה לפנייה שלכם. הפנייה נשמרת אצל ספק האחסון של האתר (Netlify) ומגיעה אלינו בדוא״ל; אם תשלחו אותה בוואטסאפ, הנוסח עובר דרך וואטסאפ. איננו מעבירים את הפרטים לגורמים אחרים ואיננו משתמשים בהם לדיוור. אין חובה חוקית למסור אותם, אך בלעדיהם לא נוכל לחזור אליכם.",
           "מפת OpenStreetMap נטענת רק לאחר לחיצה שלכם; ברגע זה שירות OpenStreetMap מקבל את כתובת ה־IP שלכם. הכפתורים WhatsApp, Telegram, Google Maps ו־Waze פותחים את השירותים האלה.",
           "סרטון YouTube נטען רק לאחר לחיצה שלכם; ברגע זה YouTube (Google) מקבל את כתובת ה־IP שלכם ועשוי לשמור נתונים בדפדפן.",
-          "כדי לעיין בפרטים שלכם, לתקן או למחוק אותם, פנו אלינו: {contact}."
+          "כדי לעיין בפרטים שלכם, לתקן או למחוק אותם, פנו אלינו: {contact}.",
+          "אנו רשאים לשנות מדיניות זו בכל עת וללא הודעה מוקדמת. הנוסח המחייב הוא הנוסח האחרון שפורסם בעמוד זה. עדכון אחרון: {date}."
         ],
         demoNote: "כרגע הטופס פועל במצב הדגמה ואינו אוסף מידע."
       },
@@ -759,13 +763,13 @@ window.QPAGE = {
         summary: "We want everyone to be able to use this site, including people with disabilities.",
         more: "Accessibility statement",
         items: [
-          "The site follows the Israeli standard IS 5568 and the WCAG 2.1 guidelines at level AA.",
+          "The {name} website follows the Israeli standard IS 5568 and the WCAG 2.1 guidelines at level AA.",
           "You can use the site with a keyboard, with screen readers and with text enlarged up to 200%.",
           "Images have text descriptions, and form fields have labels and clear error messages.",
           "The site works on phones and computers; Hebrew text runs right to left.",
           "The map and video load from third-party services only after you press a button; their accessibility is outside our control.",
           "If something is hard to use or does not work, contact us: {contact}. We will reply and try to help.",
-          "Statement updated: {date}."
+          "We may change this statement at any time without prior notice. The latest version published on this page applies. Last updated: {date}."
         ]
       },
       privacy: {
@@ -773,12 +777,14 @@ window.QPAGE = {
         summary: "This site uses no cookies or ads. We use your details only to respond to your request.",
         more: "More details",
         items: [
+          "The owner of this site, responsible for your data, is {name}.",
           "This site uses no cookies, visitor counters or advertising systems.",
           "Your browser only stores the language you chose. This is not personal data, and you can remove it by clearing this site's data in your browser.",
           "Form data (name, phone, email, message) is used only to respond to your request. Requests are stored by the site host (Netlify) and reach us by email; if you send yours via WhatsApp, the text passes through WhatsApp. We do not share the data with anyone else or use it for mailings. You are not legally required to provide it, but without it we cannot reply.",
           "The OpenStreetMap map loads only when you press the button; at that moment OpenStreetMap receives your IP address. The WhatsApp, Telegram, Google Maps and Waze buttons open those services.",
           "The YouTube video loads only when you press the button; at that moment YouTube (Google) receives your IP address and may store data in your browser.",
-          "To see, correct or delete your data, contact us: {contact}."
+          "To see, correct or delete your data, contact us: {contact}.",
+          "We may change this policy at any time without prior notice. The latest version published on this page applies. Last updated: {date}."
         ],
         demoNote: "The form is currently in demo mode and collects no data."
       },
