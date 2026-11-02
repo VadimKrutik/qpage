@@ -355,6 +355,26 @@ const answers0 = answers;
   ok("«Ссылки»: адрес анкеты QPortall первым, Google Форма — запасная", alerts[0].includes("Анкета QPortall для клиента: <a href=\"" + nsite.ssl_url) && alerts[0].includes("Google Форма (запасная)"), alerts[0]);
   ok("меню: «Опубликовать анкету» и «собрать ещё раз»", (ctx.addMenu(), true));
 
+  // --- Кредиты Netlify: счётчик выкладок, одно письмо при 80% лимита, одно - если кончились ---
+  {
+    const month = ctx.netlifyMonth(), key = "NETLIFY_DEPLOYS:" + month;
+    ok("кредиты: выкладки считаются (каждая post /deploys)", +props[key] > 0, props[key]);
+    props.NETLIFY_CREDITS = "150"; props[key] = "6"; delete props["NETLIFY_ALERT:warn"];
+    const m0 = mails.length;
+    ctx.countNetlifyDeploy(); ctx.countNetlifyDeploy(); ctx.countNetlifyDeploy();
+    const warn = mails.slice(m0).filter((m) => m.subj === "QPortall: кредиты Netlify на исходе");
+    ok("кредиты: при 80% лимита одно письмо владельцу за месяц", warn.length === 1 && warn[0].to === "owner@example.com" && warn[0].body.includes("из 150 кредитов"), JSON.stringify(warn));
+    const realFetch = ctx.UrlFetchApp.fetch;
+    ctx.UrlFetchApp.fetch = () => ({ getResponseCode: () => 403, getContentText: () => JSON.stringify({ message: "Account credit usage exceeded" }) });
+    const m1 = mails.length; let err1 = "", err2 = "";
+    try { ctx.netlify("get", "/sites/x"); } catch (e) { err1 = e.message; }
+    try { ctx.netlify("get", "/sites/x"); } catch (e) { err2 = e.message; }
+    ctx.UrlFetchApp.fetch = realFetch;
+    const out = mails.slice(m1).filter((m) => m.subj === "QPortall: кончились кредиты Netlify");
+    ok("кредиты кончились: понятная ошибка и одно письмо владельцу", err1 === "кончились кредиты Netlify" && err2 === err1 && out.length === 1, err1 + " | " + out.length);
+    delete props.NETLIFY_CREDITS; delete props["NETLIFY_ALERT:warn"]; delete props["NETLIFY_ALERT:out"];
+  }
+
   // --- Свой домен клиента: Netlify получает домен, окно с записями DNS, статус на «Сайты» ---
   {
     ok("домен: очистка https://www. и пути", ctx.cleanDomain(" https://WWW.Studio-Lana.co.il/about ") === "studio-lana.co.il");

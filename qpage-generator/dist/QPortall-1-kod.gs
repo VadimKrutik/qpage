@@ -1501,6 +1501,33 @@ var NETLIFY_API = "https://api.netlify.com/api/v1";
 var NETLIFY_TOKEN_PAGE = "https://app.netlify.com/user/applications#personal-access-tokens";
 var NETLIFY_WAIT_SEC = 90;
 
+// ---------- Кредиты Netlify ----------
+// Каждая выкладка - 15 кредитов. Считаем выкладки за месяц; при 80% месячного лимита (свойство NETLIFY_CREDITS,
+// по умолчанию 1000 - тариф Personal) - одно письмо владельцу. Кредиты тратятся и на трафик, поэтому это нижняя оценка.
+var NETLIFY_DEPLOY_CREDITS = 15;
+var NETLIFY_WARN_SHARE = 0.8;
+function netlifyMonth() { return Utilities.formatDate(new Date(), "Asia/Jerusalem", "yyyy-MM"); }
+function countNetlifyDeploy() {
+  var p = PropertiesService.getScriptProperties(), key = "NETLIFY_DEPLOYS:" + netlifyMonth();
+  var n = (+p.getProperty(key) || 0) + 1;
+  p.setProperty(key, String(n));
+  var limit = +p.getProperty("NETLIFY_CREDITS") || 1000, used = n * NETLIFY_DEPLOY_CREDITS;
+  if (used >= limit * NETLIFY_WARN_SHARE) {
+    netlifyOwnerAlert("warn", "QPortall: кредиты Netlify на исходе",
+      "В этом месяце уже " + n + " выкладок сайтов на Netlify, это около " + used + " из " + limit + " кредитов (без учёта трафика).\n\n" +
+      "Если кредиты кончатся, новые сайты и обновления не опубликуются до следующего месяца. Проверить остаток: https://app.netlify.com/ (Billing → Usage).");
+  }
+  return n;
+}
+// Одно письмо владельцу на каждый вид предупреждения в месяц.
+function netlifyOwnerAlert(kind, subject, body) {
+  var p = PropertiesService.getScriptProperties(), key = "NETLIFY_ALERT:" + kind;
+  if (p.getProperty(key) === netlifyMonth()) return false;
+  p.setProperty(key, netlifyMonth());
+  try { MailApp.sendEmail(Session.getEffectiveUser().getEmail(), subject, body); } catch (e) { Logger.log(subject + ": " + e); }
+  return true;
+}
+
 function connectNetlify() {
   var p = PropertiesService.getScriptProperties();
   var html = HtmlService.createHtmlOutput(
@@ -1553,10 +1580,16 @@ function netlify(method, path, body, token) {
   else if (body) { opt.contentType = "application/json"; opt.payload = JSON.stringify(body); }
   var res = UrlFetchApp.fetch(NETLIFY_API + path, opt);
   var code = res.getResponseCode(), text = res.getContentText();
-  if (code >= 200 && code < 300) return text ? JSON.parse(text) : {};
+  if (code >= 200 && code < 300) {
+    if (method === "post" && /\/deploys$/.test(path)) { try { countNetlifyDeploy(); } catch (e) { Logger.log("счётчик Netlify: " + e); } }
+    return text ? JSON.parse(text) : {};
+  }
   var msg = text;
   try { var j = JSON.parse(text); msg = j.message || j.error || text; } catch (e) { /* не JSON */ }
   if (/credit/i.test(msg)) {
+    netlifyOwnerAlert("out", "QPortall: кончились кредиты Netlify",
+      "Netlify не принимает новые сайты и обновления: кончились кредиты.\n\nПополните или смените тариф: https://app.netlify.com/ (Billing). " +
+      "После этого нажмите «Сделать сайт из этого листа» у сайтов, которые не обновились (колонка «проверить» на «Сайты»).");
     var e2 = new Error("кончились кредиты Netlify"); e2.status = code; throw e2;
   }
   var err = new Error((code === 401 ? "ключ Netlify не подходит (QPortall → Подключить Netlify)" :
