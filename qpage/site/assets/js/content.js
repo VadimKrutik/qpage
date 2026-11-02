@@ -378,7 +378,7 @@ window.QPAGE = {
         pay: "לתשלום",
         writeUs: "השאירו פנייה",
         priceFrom: "החל מ־{price}",
-        priceOnRequest: "המחיר לפי בקשה",
+        priceOnRequest: "מחיר לפי בקשה",
         toTop: "לראש העמוד",
         noscript: "כדי להחליף שפה ולהשתמש בטופס, יש להפעיל JavaScript."
       },
